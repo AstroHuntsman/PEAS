@@ -37,11 +37,8 @@ class WeatherAbstract(object):
     def __init__(self, use_mongo=True):
         self.config = load_config()
 
-        # Read configuration
-        self.sensor_data = self.config['weather']['aag_cloud']
-        self.safety_delay = self.sensor_data.get('safety_delay', 15.)
-
-        self.web_data = self.config['weather']['web_service']
+        self.threshold_data = self.config['thresholds']
+        self.safety_delay = self.config.get('safety_delay', 15.)
 
         self.db = None
         if use_mongo:
@@ -57,7 +54,7 @@ class WeatherAbstract(object):
 
         self.messaging.send_message(channel, msg)
 
-    def capture(self):
+    def capture(self, data):
         # Make Safety Decision
         self.safe_dict = self.make_safety_decision(data)
 
@@ -79,6 +76,7 @@ class WeatherAbstract(object):
         return data
 
     def make_safety_decision(self, current_values):
+        self.logger.debug('Making safety decision')
         self.logger.debug('Found {} weather data entries in last {:.0f} minutes'.format(
             len(self.weather_entries), self.safety_delay))
         safe = False
@@ -104,20 +102,20 @@ class WeatherAbstract(object):
                 'Gust': gust[0],
                 'Rain': rain[0]}
 
-    def _get_cloud_safety(self):
+    def _get_cloud_safety(self, sky_diff, last_cloud):
         safety_delay = self.safety_delay
 
-        threshold_cloudy = self.sensor_data.get('threshold_cloudy', -22.5)
-        threshold_very_cloudy = self.sensor_data.get('threshold_very_cloudy', -15.)
+        threshold_cloudy = self.weather_entries.get('threshold_cloudy', -22.5)
+        threshold_very_cloudy = self.weather_entries.get('threshold_very_cloudy', -15.)
 
         if len(sky_diff) == 0:
             self.logger.debug('  UNSAFE: no sky temperatures found')
             sky_safe = False
             cloud_condition = 'Unknown'
         else:
-            if max_sky_diff > threshold_cloudy:
+            if sky_diff > threshold_cloudy:
                 self.logger.debug('UNSAFE: Cloudy in last {} min. Max sky diff {:.1f} C'.format(
-                                  safety_delay, max_sky_diff))
+                                  safety_delay, sky_diff))
                 sky_safe = False
             else:
                 sky_safe = True
@@ -132,14 +130,14 @@ class WeatherAbstract(object):
 
         return cloud_condition, sky_safe
 
-    def _get_wind_safety(self):
+    def _get_wind_safety(self, wind_speed, wind_gust):
         safety_delay = self.safety_delay
 
-        threshold_windy = self.sensor_data.get('threshold_windy', 20)
-        threshold_very_windy = self.sensor_data.get('threshold_very_windy', 30)
+        threshold_windy = self.weather_entries.get('threshold_windy', 20)
+        threshold_very_windy = self.weather_entries.get('threshold_very_windy', 30)
 
-        threshold_gusty = self.sensor_data.get('threshold_gusty', 40)
-        threshold_very_gusty = self.sensor_data.get('threshold_very_gusty', 50)
+        threshold_gusty = self.weather_entries.get('threshold_gusty', 40)
+        threshold_very_gusty = self.weather_entries.get('threshold_very_gusty', 50)
 
         if len(wind_gust) == 0:
             self.logger.debug(' UNSAFE: no maximum wind gust readings found')
@@ -189,9 +187,15 @@ class WeatherAbstract(object):
         return (wind_condition, wind_safe), (gust_condition, gust_safe)
 
     def _get_rain_safety(self):
-        safety_delay = self.safety_delay
-        entries = self.weather_entries
-        # since the rain data is different in the two systems
-        # can not make a method that satisfies both
+        """ Currently being worked on.
 
-        return rain_condition, rain_safe
+        Issue:
+            AAG sensor only uses one variable and check if it fits in set
+        parameters.
+            Where we are using the three binary values from the
+        the AAT metdata, two tell us if it is raining and the other tells
+        us if it is wet.
+
+        'Want to know which columns of the data mean wet, then logical OR them'
+        """
+        return NotImplemented

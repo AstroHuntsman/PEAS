@@ -15,7 +15,7 @@ weather:
     station: mongo
     web_service:
       name: 'aat-metdata'
-      link: 'http://site.aao.gov.au/met/metdata.dat'
+      link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metadata1.dat'
       column_names:  ['Time (UTC)',
                       'Outside air temperature',
                       'Dome air temperature',
@@ -58,28 +58,9 @@ weather:
                       u.mm,
                       u.ABmag]
       max_age: 60.
-      cache_age: 1.382e10
-      sky_ambient: 'Sky-ambient'
-      sky_ambient_uncertainty: 'Sky-ambient uncertainty'
-      average_wind_speed: 'Average wind speed'
-      maximum_wind_gust: 'Maximum wind gust'
-      rain_sensor: 'Rain sensor'
-      rain_flag: 'Boltwood rain flag'
-      wet_flag: 'Boltwood wet flag'
-      threshold_rain: 0
-      threshold_wet: 0
     aag_cloud:
         name: 'aag-cloudsensor'
         serial_port: '/dev/ttyUSB1'
-        threshold_cloudy: -25
-        threshold_very_cloudy: -15.
-        threshold_windy: 50.
-        threshold_very_windy: 75.
-        threshold_gusty: 100.
-        threshold_very_gusty: 125.
-        threshold_wet: 2200.
-        threshold_rainy: 1800.
-        safety_delay: 15 ## minutes
         heater:
             low_temp: 0 ## deg C
             low_delta: 6 ## deg C
@@ -95,3 +76,13 @@ weather:
         wind_limits: [0, 75]
         rain_limits: [700, 3200]
         pwm_limits: [-5, 105]
+    thresholds:
+        threshold_cloudy: -25
+        threshold_very_cloudy: -15.
+        threshold_windy: 50.
+        threshold_very_windy: 75.
+        threshold_gusty: 100.
+        threshold_very_gusty: 125.
+        threshold_wet: 2200.
+        threshold_rainy: 1800.
+    safety_delay: 15. ## minutes

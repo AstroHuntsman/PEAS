@@ -62,6 +62,9 @@ class WeatherData(WeatherAbstract):
     def __init__(self, use_mongo=True):
         super.__init__(self, use_mongo=use_mongo)
 
+        # Read configuratio
+        self.web_data = self.config['weather']['web_service']
+
         self.logger = logging.getLogger(self.web_data.get('name'))
         self.logger.setLevel(logging.INFO)
 
@@ -78,28 +81,16 @@ class WeatherData(WeatherAbstract):
         data['weather_data_from'] = self.web_data.get('name')
         self.table_data = self.fetch_met_data()
         col_names = self.web_data.get('column_names')
-        for i in range(0, len('col_names')):
-            data[col_names[i]] = self.table_data[col_names[i]][0]
+        for name in col_names:
+            data[name] = self.table_data[name][0]
 
-        super.capture()
-
-        return data
-
-    def make_safety_decision(self, current_values):
-        self.logger.debug('Making safety decision with {}'.format(self.web_data.get('name')))
-        super.make_safety_decision(current_values)
-
-        return {'Safe': safe,
-                'Sky': cloud[0],
-                'Wind': wind[0],
-                'Gust': gust[0],
-                'Rain': rain[0]}
+        return super.capture(data)
 
     def fetch_met_data(self):
         try:
             cache_age = Time.now() - self._met_data['Time (UTC)'][0] * 86400
         except AttributeError:
-            cache_age = self.web_data.get('cache_age', 1.382e10) * u.year
+            cache_age = 1.382e10 * u.year
 
         if cache_age > self.max_age:
             # Download met data file
@@ -127,60 +118,50 @@ class WeatherData(WeatherAbstract):
                 self.logger.debug('Number of columns does not match number of units given')
 
             # Set units for items that have them
-            for i in range(1, len('col_names')):
-                t[col_names[i]].unit = col_units[i]
+            for name, unit in zip(col_names, col_units):
+                t[name].unit = unit
 
             self._met_data = t
 
         return self._met_data
 
     def _get_cloud_safety(self, current_values):
-        entries = self.weather_entries
-
-        sky_diff = weather_entries[self.web_data.get('sky_ambient')]
-        sky_diff_u = weather_entries[self.web_data.get('sky_ambient_uncertainty')]
+        sky_diff = self.weather_entries['sky-ambient']
+        sky_diff_u = self.weather_entries['sky-ambient uncertainty']
 
         max_sky_diff = sky_diff + sky_diff_u
         last_cloud = sky_diff
 
-        super._get_cloud_safety()
-
-        return cloud_condition, sky_safe
+        return super._get_cloud_safety(max_sky_diff, last_cloud)
 
     def _get_wind_safety(self, current_values):
-        entries = self.weather_entries
-
         # Wind (average and gusts)
-        wind_speed = entries[self.web_data.get('average_wind_speed')]
-        wind_gust = entries[self.web_data.get('maximum_wind_gust')]
+        wind_speed = self.weather_entries['Average wind speed']
+        wind_gust = self.weather_entries['Maximum wind gust']
 
-        super._get_wind_safety()
+        return super._get_wind_safety(wind_speed, wind_gust)
 
-        return (wind_condition, wind_safe), (gust_condition, gust_safe)
-
-    def _get_rain_alarm_safety(self, current_values):
-        super._get_rain_safety()
-        threshold_rain = self.web_data.get('threshold_rain', 0)
-        threshold_wet = self.web_data.get('threshold_wet', 0)
+    def _get_rain_safety(self, current_values):
+        safety_delay = self.safety_delay
 
         # Rain
-        rain_sensor = entries[self.web_data('rain_sensor')]
-        rain_flag = entries[self.web_data('rain_flag')]
-        wet_flag = entries[self.web_data('wet_flag')]
+        rain_sensor = self.weather_entries['Rain sensor']
+        rain_flag = self.weather_entries['Boltwood rain flag']
+        wet_flag = self.weather_entries['Boltwood wet flag']
 
         if len(rain_sensor) == 0 and len(rain_flag) == 0 and len(wet_flag) == 0:
             rain_safe = False
             rain_condition = 'Unknown'
         else:
             # Check current values
-            if rain_sensor > threshold_rain and rain_flag > threshold_rain:
-                rain_condition = 'RAIN'
+            if rain_sensor > 0 or rain_flag > 0:
+                rain_condition = 'Rain'
                 rain_safe = False
-            elif wet_flag > threshold_wet:
-                rain_condition = 'WET'
+            elif wet_flag > 0:
+                rain_condition = 'Wet'
                 rain_safe = False
             else:
-                rain_condition = 'NO RAIN'
+                rain_condition = 'Dry'
                 rain_safe = True
 
             self.logger.debug('Rain Condition: {}'.format(rain_condition))

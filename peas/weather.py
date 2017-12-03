@@ -100,6 +100,9 @@ class AAGCloudSensor(WeatherAbstract):
     def __init__(self, serial_address=None, use_mongo=True):
         super.__init__(self, use_mongo=use_mongo)
 
+        # Read configuration
+        self.sensor_data = self.config['weather']['aag_cloud']
+
         self.logger = logging.getLogger(self.sensor_data.get('name'))
         self.logger.setLevel(logging.INFO)
 
@@ -617,9 +620,7 @@ class AAGCloudSensor(WeatherAbstract):
         if self.get_wind_speed():
             data['wind_speed_KPH'] = self.wind_speed.value
 
-        super.capture()
-
-        return data
+        return super.capture(data)
 
     def AAG_heater_algorithm(self, target, last_entry):
         """
@@ -739,35 +740,19 @@ class AAGCloudSensor(WeatherAbstract):
                 ))
                 self.set_PWM(new_PWM)
 
-    def make_safety_decision(self, current_values):
-        self.logger.debug('Making safety decision with {}'.format(self.sensor_data.get('product_1')))
-        super.make_safety_decision(current_values)
-
-        return {'Safe': safe,
-                'Sky': cloud[0],
-                'Wind': wind[0],
-                'Gust': gust[0],
-                'Rain': rain[0]}
-
     def _get_cloud_safety(self, current_values):
-        entries = self.weather_entries
-
         sky_diff = [x['sky_temp_C'] - x['ambient_temp_C']
-                    for x in entries
+                    for x in self.weather_entries
                     if ('ambient_temp_C' and 'sky_temp_C') in x.keys()]
         max_sky_diff = max(sky_diff)
         last_cloud = current_values['sky_temp_C'] - current_values['ambient_temp_C']
 
-        super._get_cloud_safety()
-
-        return cloud_condition, sky_safe
+        return super._get_cloud_safety(max_sky_diff, last_cloud)
 
     def _get_wind_safety(self, current_values):
-        entries = self.weather_entries
-
         # Wind (average and gusts)
         wind_speed = [x['wind_speed_KPH']
-                      for x in entries
+                      for x in self.weather_entries
                       if 'wind_speed_KPH' in x.keys()]
 
         wind_gust = max(wind_speed)
@@ -781,17 +766,16 @@ class AAGCloudSensor(WeatherAbstract):
 
         wind_speed = max(wind_mavg)
 
-        super._get_wind_safety()
-
-        return (wind_condition, wind_safe), (gust_condition, gust_safe)
+        return super._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        super._get_rain_safety()
-        threshold_wet = self.sensor_data.get('threshold_wet', 2000.)
-        threshold_rain = self.sensor_data.get('threshold_rainy', 1700.)
+        safety_delay = self.safety_delay
+
+        threshold_wet = self.weather_entries.get('threshold_wet', 2000.)
+        threshold_rain = self.weather_entries.get('threshold_rainy', 1700.)
 
         # Rain
-        rf_value = [x['rain_frequency'] for x in entries if 'rain_frequency' in x.keys()]
+        rf_value = [x['rain_frequency'] for x in self.weather_entries if 'rain_frequency' in x.keys()]
 
         if len(rf_value) == 0:
             rain_safe = False
