@@ -769,40 +769,21 @@ class AAGCloudSensor(WeatherAbstract):
         return super._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        safety_delay = self.safety_delay
-
         threshold_wet = self.weather_entries.get('threshold_wet', 2000.)
         threshold_rain = self.weather_entries.get('threshold_rainy', 1700.)
 
-        # Rain
-        rf_value = [x['rain_frequency'] for x in self.weather_entries if 'rain_frequency' in x.keys()]
+        # Make rain values binary
+        # since there is only one rain sensor in the AAG rain_flag and rain_sensor are given the same value
+        if current_values['rain_frequency'] <= threshold_rain:
+            rain_flag = 1
+            rain_sensor = rain_flag
+        elif current_values['rain_frequency'] > threshold_rain::
+            rain_flag = 0
+            rain_sensor = rain_flag
 
-        if len(rf_value) == 0:
-            rain_safe = False
-            rain_condition = 'Unknown'
-        else:
-            # Check current values
-            if current_values['rain_frequency'] <= threshold_rain:
-                rain_condition = 'Rain'
-                rain_safe = False
-            elif current_values['rain_frequency'] <= threshold_wet:
-                rain_condition = 'Wet'
-                rain_safe = False
-            else:
-                rain_condition = 'Dry'
-                rain_safe = True
+        if current_values['rain_frequency'] <= threshold_wet:
+            wet_flag = 1
+        elif current_values['rain_frequency'] > threshold_wet::
+            wet_flag = 0
 
-            # If safe now, check last 15 minutes
-            if rain_safe:
-                if min(rf_value) <= threshold_rain:
-                    self.logger.debug('  UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
-                    rain_safe = False
-                elif min(rf_value) <= threshold_wet:
-                    self.logger.debug('  UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
-                    rain_safe = False
-                else:
-                    rain_safe = True
-
-            self.logger.debug('  Rain Condition: {}'.format(rain_condition))
-
-        return rain_condition, rain_safe
+        return super._get_rain_safety(rain_sensor, rain_flag, wet_flag)

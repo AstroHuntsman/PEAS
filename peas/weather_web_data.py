@@ -135,35 +135,14 @@ class WeatherData(WeatherAbstract):
         return super._get_cloud_safety(max_sky_diff, last_cloud)
 
     def _get_wind_safety(self, current_values):
-        # Wind (average and gusts)
         wind_speed = self.weather_entries['Average wind speed']
         wind_gust = self.weather_entries['Maximum wind gust']
 
         return super._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        safety_delay = self.safety_delay
-
-        # Rain
         rain_sensor = self.weather_entries['Rain sensor']
         rain_flag = self.weather_entries['Boltwood rain flag']
         wet_flag = self.weather_entries['Boltwood wet flag']
 
-        if len(rain_sensor) == 0 and len(rain_flag) == 0 and len(wet_flag) == 0:
-            rain_safe = False
-            rain_condition = 'Unknown'
-        else:
-            # Check current values
-            if rain_sensor > 0 or rain_flag > 0:
-                rain_condition = 'Rain'
-                rain_safe = False
-            elif wet_flag > 0:
-                rain_condition = 'Wet'
-                rain_safe = False
-            else:
-                rain_condition = 'Dry'
-                rain_safe = True
-
-            self.logger.debug('Rain Condition: {}'.format(rain_condition))
-
-        return rain_condition, rain_safe
+        return super._get_rain_safety(rain_sensor, rain_flag, wet_flag)

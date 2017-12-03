@@ -187,15 +187,35 @@ class WeatherAbstract(object):
         return (wind_condition, wind_safe), (gust_condition, gust_safe)
 
     def _get_rain_safety(self):
-        """ Currently being worked on.
+        safety_delay = self.safety_delay
 
-        Issue:
-            AAG sensor only uses one variable and check if it fits in set
-        parameters.
-            Where we are using the three binary values from the
-        the AAT metdata, two tell us if it is raining and the other tells
-        us if it is wet.
+        # values for the sensor and flags must be either 1 for rain/wet or 0 for dry/no rain
+        if len(rain_sensor) == 0 and len(rain_flag) == 0 and len(wet_flag) == 0:
+            rain_safe = False
+            rain_condition = 'Unknown'
+        else:
+            # Check current values
+            if rain_sensor > 0 or rain_flag > 0:
+                rain_condition = 'Rain'
+                rain_safe = False
+            elif wet_flag > 0:
+                rain_condition = 'Wet'
+                rain_safe = False
+            else:
+                rain_condition = 'Dry'
+                rain_safe = True
 
-        'Want to know which columns of the data mean wet, then logical OR them'
-        """
-        return NotImplemented
+            # If safe now, check last 15 minutes
+            if rain_safe:
+                if rain_sensor > 0 or rain_flag > 0::
+                    self.logger.debug('  UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
+                    rain_safe = False
+                elif wet_flag > 0:
+                    self.logger.debug('  UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
+                    rain_safe = False
+                else:
+                    rain_safe = True
+
+            self.logger.debug('Rain Condition: {}'.format(rain_condition))
+
+        return rain_condition, rain_safe
