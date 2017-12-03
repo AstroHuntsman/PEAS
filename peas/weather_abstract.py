@@ -186,7 +186,7 @@ class WeatherAbstract(object):
 
         return (wind_condition, wind_safe), (gust_condition, gust_safe)
 
-    def _get_rain_safety(self):
+    def _get_rain_safety(self, rain_sensor, rain_flag, wet_flag):
         safety_delay = self.safety_delay
 
         # values for the sensor and flags must be either 1 for rain/wet or 0 for dry/no rain
