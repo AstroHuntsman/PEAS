@@ -1,3 +1,7 @@
+# This needs to be removed - find a way to do this in command #
+import sys
+sys.path.append("C:\\Users\\tiger\\Desktop\\PEAS")
+
 import datetime
 import pandas
 import time

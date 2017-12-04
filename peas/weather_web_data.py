@@ -62,7 +62,7 @@ class WeatherData(WeatherAbstract):
     def __init__(self, use_mongo=True):
         super.__init__(self, use_mongo=use_mongo)
 
-        # Read configuratio
+        # Read configuration
         self.web_data = self.config['weather']['web_service']
 
         self.logger = logging.getLogger(self.web_data.get('name'))
@@ -145,4 +145,11 @@ class WeatherData(WeatherAbstract):
         rain_flag = self.weather_entries['Boltwood rain flag']
         wet_flag = self.weather_entries['Boltwood wet flag']
 
-        return super._get_rain_safety(rain_sensor, rain_flag, wet_flag)
+        if rain_sensor > 0 and rain_flag > 0:
+            rain_flag = 1
+        elif rain_sensor < 0 or rain_flag < 0:
+            rain_flag = -1
+        else:
+            rain_flag = 0
+
+        return super._get_rain_safety(rain_flag, wet_flag)

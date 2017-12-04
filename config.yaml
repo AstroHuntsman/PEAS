@@ -58,6 +58,31 @@ weather:
                       u.mm,
                       u.ABmag]
       max_age: 60.
+      thresholds:
+        sky-ambient:
+          clear: -inf, -25.
+          cloudy: -25., -15.
+          very_cloudy: -15., +inf
+        wind_speed:
+          calm: 0, 50.
+          windy: 50., 75.
+          very_windy: 75., +inf
+        wind_gust:
+          calm: 0, 100.
+          gusty: 100., 125.
+          very_gusty: 125., +inf
+        rain_sensor:
+          no_data: -1
+          no_rain: 0
+          rain: 1
+        boltwood_rain_flag:
+          no_data: -1
+          no_rain: 0
+          rain: 1
+        boltwood_wet_flag:
+          no_data: -1
+          dry: 0
+          wet: 1
     aag_cloud:
         name: 'aag-cloudsensor'
         serial_port: '/dev/ttyUSB1'
@@ -70,19 +95,27 @@ weather:
             impulse_temp: 10 ## deg C
             impulse_duration: 60 ## seconds
             impulse_cycle: 600 ## seconds
+        thresholds:
+          sky-ambient:
+            clear: -inf, -25.
+            cloudy: -25., -15.
+            very_cloudy: -15., +inf
+          wind_speed:
+            calm: 0, 50.
+            windy: 50., 75.
+            very_windy: 75., +inf
+          wind_gust:
+            calm: 0, 100.
+            gusty: 100., 125.
+            very_gusty: 125., +inf
+          rain_sensor:
+            dry: 2200., +inf
+            wet: 1800., 2200.
+            rainy: 0, 1800.
     plot:
         amb_temp_limits: [-5, 35]
         cloudiness_limits: [-45, 5]
         wind_limits: [0, 75]
         rain_limits: [700, 3200]
         pwm_limits: [-5, 105]
-    thresholds:
-        threshold_cloudy: -25
-        threshold_very_cloudy: -15.
-        threshold_windy: 50.
-        threshold_very_windy: 75.
-        threshold_gusty: 100.
-        threshold_very_gusty: 125.
-        threshold_wet: 2200.
-        threshold_rainy: 1800.
     safety_delay: 15. ## minutes

@@ -769,21 +769,23 @@ class AAGCloudSensor(WeatherAbstract):
         return super._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        threshold_wet = self.weather_entries.get('threshold_wet', 2000.)
-        threshold_rain = self.weather_entries.get('threshold_rainy', 1700.)
+        threshold_wet = self.thresholds.get('threshold_wet', 2000.)
+        threshold_rain = self.thresholds.get('threshold_rainy', 1700.)
 
-        # Make rain values binary
-        # since there is only one rain sensor in the AAG rain_flag and rain_sensor are given the same value
+        rf_value = [x['rain_frequency'] for x in self.weather_entries if 'rain_frequency' in x.keys()]
+
+        if len(rf_value) == 0:
+            rain_flag = -1
+            wet_flag = -1
+
         if current_values['rain_frequency'] <= threshold_rain:
             rain_flag = 1
-            rain_sensor = rain_flag
-        elif current_values['rain_frequency'] > threshold_rain::
+        elif current_values['rain_frequency'] > threshold_rain:
             rain_flag = 0
-            rain_sensor = rain_flag
 
         if current_values['rain_frequency'] <= threshold_wet:
             wet_flag = 1
-        elif current_values['rain_frequency'] > threshold_wet::
+        elif current_values['rain_frequency'] > threshold_wet:
             wet_flag = 0
 
-        return super._get_rain_safety(rain_sensor, rain_flag, wet_flag)
+        return super._get_rain_safety(rain_flag, wet_flag)

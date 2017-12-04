@@ -37,7 +37,7 @@ class WeatherAbstract(object):
     def __init__(self, use_mongo=True):
         self.config = load_config()
 
-        self.threshold_data = self.config['thresholds']
+        self.thresholds = self.config.get['thresholds']
         self.safety_delay = self.config.get('safety_delay', 15.)
 
         self.db = None
@@ -105,97 +105,116 @@ class WeatherAbstract(object):
     def _get_cloud_safety(self, sky_diff, last_cloud):
         safety_delay = self.safety_delay
 
-        threshold_cloudy = self.weather_entries.get('threshold_cloudy', -22.5)
-        threshold_very_cloudy = self.weather_entries.get('threshold_very_cloudy', -15.)
+        # get threshholds for sky-ambient
+        amb_thresholds = self.thresholds['sky-ambient']
+
+        threshold_cloudy = amb_thresholds.get('cloudy')
+        threshold_very_cloudy = amb_thresholds.get('very_cloudy')
 
         if len(sky_diff) == 0:
-            self.logger.debug('  UNSAFE: no sky temperatures found')
+            self.logger.debug('UNSAFE: no sky temperatures found')
             sky_safe = False
             cloud_condition = 'Unknown'
         else:
-            if sky_diff > threshold_cloudy:
+            if sky_diff > threshold_very_cloudy[0] and sky_diff <= threshold_very_cloudy[1]:
+                self.logger.debug('UNSAFE: Very cloudy in last {} min. Max sky diff {:.1f} C'.format(
+                                  safety_delay, sky_diff))
+                sky_safe = False
+            elif sky_diff > threshold_cloudy[0] and sky_diff <= threshold_cloudy[1]:
                 self.logger.debug('UNSAFE: Cloudy in last {} min. Max sky diff {:.1f} C'.format(
                                   safety_delay, sky_diff))
                 sky_safe = False
             else:
                 sky_safe = True
 
-            if last_cloud > threshold_very_cloudy:
+            if last_cloud > threshold_very_cloudy[0] and last_cloud <= threshold_very_cloudy[1]:
                 cloud_condition = 'Very Cloudy'
-            elif last_cloud > threshold_cloudy:
+            elif last_cloud > threshold_cloudy[0] and last_cloud <= threshold_cloudy[1]::
                 cloud_condition = 'Cloudy'
             else:
                 cloud_condition = 'Clear'
-            self.logger.debug('Cloud Condition: {} (Sky-Amb={:.1f} C)'.format(cloud_condition, last_cloud))
+
+        self.logger.debug('Cloud Condition: {} (Sky-Amb={:.1f} C)'.format(cloud_condition, last_cloud))
 
         return cloud_condition, sky_safe
 
     def _get_wind_safety(self, wind_speed, wind_gust):
         safety_delay = self.safety_delay
 
-        threshold_windy = self.weather_entries.get('threshold_windy', 20)
-        threshold_very_windy = self.weather_entries.get('threshold_very_windy', 30)
+        wind_thresholds = self.thresholds['wind_speed']
 
-        threshold_gusty = self.weather_entries.get('threshold_gusty', 40)
-        threshold_very_gusty = self.weather_entries.get('threshold_very_gusty', 50)
+        threshold_windy = wind_thresholds.get('windy')
+        threshold_very_windy = wind_thresholds.get('very_windy')
 
-        if len(wind_gust) == 0:
-            self.logger.debug(' UNSAFE: no maximum wind gust readings found')
-            gust_safe = False
-            gust_condition = 'Unknown'
+        gust_thresholds = self.thresholds['wind_gust']
+
+        threshold_gusty = gust_thresholds.get('gusty')
+        threshold_very_gusty = gust_thresholds.get('very_gusty')
 
         if len(wind_speed) == 0:
-            self.logger.debug(' UNSAFE: no average wind speed readings found')
+            self.logger.debug('UNSAFE: no average wind speed readings found')
             wind_safe = False
             wind_condition = 'Unknown'
         else:
             # Windy?
-            if wind_speed > threshold_very_windy:
-                self.logger.debug(' UNSAFE:  Very windy in last {:.0f} min. Average wind speed {:.1f} kph'.format(
+            if wind_speed > threshold_very_windy[0] and wind_speed <= threshold_very_windy[1]:
+                self.logger.debug('UNSAFE:  Very windy in last {:.0f} min. Average wind speed {:.1f} kph'.format(
+                                  safety_delay, wind_speed))
+                wind_safe = False
+            elif wind_speed > threshold_windy[0] and wind_speed <= threshold_windy[1]:
+                self.logger.debug('UNSAFE:  Windy in last {:.0f} min. Average wind speed {:.1f} kph'.format(
                                   safety_delay, wind_speed))
                 wind_safe = False
             else:
                 wind_safe = True
 
-            if wind_speed > threshold_very_windy:
+            if wind_speed > threshold_very_windy[0] and wind_speed <= threshold_very_windy[1]:
                 wind_condition = 'Very Windy'
-            elif wind_speed > threshold_windy:
+            elif wind_speed > threshold_windy[0] and wind_speed <= threshold_windy[1]:
                 wind_condition = 'Windy'
             else:
                 wind_condition = 'Calm'
-                self.logger.debug('Wind Condition: {} ({:.1f} km/h)'.format(
-                                  wind_condition, wind_speed))
 
+            self.logger.debug('Wind Condition: {} ({:.1f} km/h)'.format(wind_condition, wind_speed))
+
+        if len(wind_gust) == 0:
+            self.logger.debug('UNSAFE: no maximum wind gust readings found')
+            gust_safe = False
+            gust_condition = 'Unknown'
+        else:
             # Gusty?
-            if wind_gust > threshold_very_gusty:
-                self.logger.debug(' UNSAFE:  Very gusty in last {:.0f} min. Max gust speed {:.1f} kph'.format(
+            if wind_gust > threshold_very_gusty[0] and wind_gust <= threshold_very_gusty[1]:
+                self.logger.debug('UNSAFE:  Very gusty in last {:.0f} min. Max gust speed {:.1f} kph'.format(
+                                  safety_delay, wind_gust))
+                gust_safe = False
+            elif wind_gust > threshold_gusty[0] and wind_gust <= threshold_gusty[1]:
+                self.logger.debug('UNSAFE:  Very gusty in last {:.0f} min. Max gust speed {:.1f} kph'.format(
                                   safety_delay, wind_gust))
                 gust_safe = False
             else:
                 gust_safe = True
 
-            if wind_gust > threshold_very_gusty:
+            if wind_gust > threshold_very_gusty[0] and wind_gust <= threshold_very_gusty[1]:
                 gust_condition = 'Very Gusty'
-            elif wind_gust > threshold_gusty:
+            elif wind_gust > threshold_gusty[0] and wind_gust <= threshold_gusty[1]:
                 gust_condition = 'Gusty'
             else:
                 gust_condition = 'Calm'
 
-            self.logger.debug('Gust Condition: {} ({:.1f} km/h)'.format(
-                              gust_condition, wind_gust))
+            self.logger.debug('Gust Condition: {} ({:.1f} km/h)'.format(gust_condition, wind_gust))
 
         return (wind_condition, wind_safe), (gust_condition, gust_safe)
 
-    def _get_rain_safety(self, rain_sensor, rain_flag, wet_flag):
+    def _get_rain_safety(self, rain_flag, wet_flag):
         safety_delay = self.safety_delay
 
         # values for the sensor and flags must be either 1 for rain/wet or 0 for dry/no rain
-        if len(rain_sensor) == 0 and len(rain_flag) == 0 and len(wet_flag) == 0:
+        if rain_flag < 0 and wet_flag < 0:
             rain_safe = False
             rain_condition = 'Unknown'
         else:
             # Check current values
-            if rain_sensor > 0 or rain_flag > 0:
+            if rain_flag > 0:
                 rain_condition = 'Rain'
                 rain_safe = False
             elif wet_flag > 0:
@@ -207,7 +226,7 @@ class WeatherAbstract(object):
 
             # If safe now, check last 15 minutes
             if rain_safe:
-                if rain_sensor > 0 or rain_flag > 0::
+                if rain_flag > 0:
                     self.logger.debug('  UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
                     rain_safe = False
                 elif wet_flag > 0:
