@@ -129,7 +129,7 @@ class WeatherAbstract(object):
 
             if last_cloud > threshold_very_cloudy[0] and last_cloud <= threshold_very_cloudy[1]:
                 cloud_condition = 'Very Cloudy'
-            elif last_cloud > threshold_cloudy[0] and last_cloud <= threshold_cloudy[1]::
+            elif last_cloud > threshold_cloudy[0] and last_cloud <= threshold_cloudy[1]:
                 cloud_condition = 'Cloudy'
             else:
                 cloud_condition = 'Clear'
@@ -208,33 +208,22 @@ class WeatherAbstract(object):
     def _get_rain_safety(self, rain_flag, wet_flag):
         safety_delay = self.safety_delay
 
-        # values for the sensor and flags must be either 1 for rain/wet or 0 for dry/no rain
-        if rain_flag < 0 and wet_flag < 0:
-            rain_safe = False
-            rain_condition = 'Unknown'
-        else:
-            # Check current values
-            if rain_flag > 0:
-                rain_condition = 'Rain'
-                rain_safe = False
-            elif wet_flag > 0:
-                rain_condition = 'Wet'
-                rain_safe = False
-            else:
-                rain_condition = 'Dry'
-                rain_safe = True
+        # not sure how to implement this properly
+        for col_name, thresholds in self.thresholds.items():
+            current_value = self.current_data[col_name]
+            current_status = 'invalid'
 
-            # If safe now, check last 15 minutes
-            if rain_safe:
-                if rain_flag > 0:
-                    self.logger.debug('  UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
-                    rain_safe = False
-                elif wet_flag > 0:
-                    self.logger.debug('  UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
-                    rain_safe = False
+            for status, threshold in thresholds.items():
+                if len(threshold) == 1:
+                    if current_value == threshold:
+                        current_status=status
+                elif len(threshold) == 2:
+                    if current_value > threshold[0] and current_value <= threshold[1]:
+                    current_status = status
                 else:
-                    rain_safe = True
+                    raise ValueError("Threshold values should be 1 or 2 numbers, got {}!".format(len(threshold))
 
-            self.logger.debug('Rain Condition: {}'.format(rain_condition))
+
+        self.logger.debug('Rain Condition: {}'.format(rain_condition))
 
         return rain_condition, rain_safe
