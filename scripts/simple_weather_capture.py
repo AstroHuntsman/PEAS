@@ -14,6 +14,7 @@ from plotly import plotly
 from plotly import tools as plotly_tools
 
 from peas import weather
+from peas import weather_web_data
 
 names = [
     'date',
@@ -152,6 +153,31 @@ if __name__ == '__main__':
     parser.add_argument('--store-mongo', action='store_true', default=True, help="Save to mongo")
     parser.add_argument('--send-message', action='store_true', default=True, help="Send message")
     args = parser.parse_args()
+
+    # Online weather data
+    aat = weather_web_data.WeatherData()
+
+    if args.plotly_stream:
+        streams = None
+        streams = get_plot(filename=args.filename)
+
+    while True:
+        data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+
+        # Save to file
+        if args.filename is not None:
+            write_capture(filename=args.filename, data=data)
+
+        if args.plotly_stream:
+            now = datetime.datetime.now()
+            streams['temp'].write({'x': now, 'y': data['ambient_temp_C']})
+            streams['cloudiness'].write({'x': now, 'y': data['sky_temp_C']})
+            streams['rain'].write({'x': now, 'y': data['rain_frequency']})
+
+        if not args.loop:
+            break
+
+        time.sleep(args.delay)
 
     # Weather object
     aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)

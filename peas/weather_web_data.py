@@ -10,8 +10,8 @@ from astropy.time import Time, TimeISO, TimeDelta
 
 from pocs.utils.messaging import PanMessaging
 from . import load_config
-from weather_abstract import WeatherAbstract
-from weather_abstract import get_mongodb
+from .weather_abstract import WeatherAbstract
+from .weather_abstract import get_mongodb
 
 
 class MixedUpTime(TimeISO):
@@ -60,7 +60,7 @@ class WeatherData(WeatherAbstract):
     """
 
     def __init__(self, use_mongo=True):
-        super.__init__(self, use_mongo=use_mongo)
+        super().__init__(use_mongo=use_mongo)
 
         # Read configuration
         self.web_data = self.config['weather']['web_service']
@@ -84,7 +84,7 @@ class WeatherData(WeatherAbstract):
         for name in col_names:
             data[name] = self.table_data[name][0]
 
-        return super.capture(data)
+        return super().capture(data)
 
     def fetch_met_data(self):
         try:
@@ -132,24 +132,39 @@ class WeatherData(WeatherAbstract):
         max_sky_diff = sky_diff + sky_diff_u
         last_cloud = sky_diff
 
-        return super._get_cloud_safety(max_sky_diff, last_cloud)
+        return super()._get_cloud_safety(max_sky_diff, last_cloud)
 
     def _get_wind_safety(self, current_values):
         wind_speed = self.weather_entries['Average wind speed']
         wind_gust = self.weather_entries['Maximum wind gust']
 
-        return super._get_wind_safety(wind_speed, wind_gust)
+        return super()._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        rain_sensor = self.weather_entries['Rain sensor']
-        rain_flag = self.weather_entries['Boltwood rain flag']
-        wet_flag = self.weather_entries['Boltwood wet flag']
+        safety_delay = self.safety_delay
 
-        if rain_sensor > 0 and rain_flag > 0:
-            rain_flag = 1
-        elif rain_sensor < 0 or rain_flag < 0:
-            rain_flag = -1
+        statuses = super()._get_status()
+
+        rain_sensor = statuses['rain_sensor']
+        rain_flag = statuses['boltwood_rain_flag']
+        wet_flag = statuses['boltwood_wet_flag']
+
+        if rain_sensor == 'no_data' or rain_flag == 'no_data' or wet_flag == 'no_data':
+            self.logger.debug('UNSAFE:  no rain data found')
+            rain_condition = 'Unknown'
+            rain_safety = False
+        elif rain_sensor == 'rain' or rain_flag == 'rain':
+            self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
+            rain_condition = 'Rain'
+            rain_safety = False
+        elif wet_flag == 'wet':
+            self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
+            rain_condition = 'Wet'
+            rain_safety = False
         else:
-            rain_flag = 0
+            rain_condition = 'Dry'
+            rain_safety = True
 
-        return super._get_rain_safety(rain_flag, wet_flag)
+        self.logger.debug('Rain Condition: {} '.format(rain_condition))
+
+        return rain_condition, rain_safety

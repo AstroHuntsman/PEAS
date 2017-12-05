@@ -97,19 +97,16 @@ weather:
             impulse_cycle: 600 ## seconds
         thresholds:
           sky-ambient:
-            clear: -inf, -25.
             cloudy: -25., -15.
-            very_cloudy: -15., +inf
+            very_cloudy: -15., .inf
           wind_speed:
-            calm: 0, 50.
             windy: 50., 75.
-            very_windy: 75., +inf
+            very_windy: 75., .inf
           wind_gust:
-            calm: 0, 100.
             gusty: 100., 125.
-            very_gusty: 125., +inf
+            very_gusty: 125., .inf
           rain_sensor:
-            dry: 2200., +inf
+            dry: 2200., .inf
             wet: 1800., 2200.
             rainy: 0, 1800.
     plot:

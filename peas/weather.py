@@ -16,8 +16,8 @@ from pocs.utils.messaging import PanMessaging
 
 from . import load_config
 from .PID import PID
-from weather_abstract import WeatherAbstract
-from weather_abstract import get_mongodb
+from .weather_abstract import WeatherAbstract
+from .weather_abstract import get_mongodb
 
 def movingaverage(interval, window_size):
     """ A simple moving average function """
@@ -98,7 +98,7 @@ class AAGCloudSensor(WeatherAbstract):
     """
 
     def __init__(self, serial_address=None, use_mongo=True):
-        super.__init__(self, use_mongo=use_mongo)
+        super().__init__(use_mongo=use_mongo)
 
         # Read configuration
         self.sensor_data = self.config['weather']['aag_cloud']
@@ -620,7 +620,7 @@ class AAGCloudSensor(WeatherAbstract):
         if self.get_wind_speed():
             data['wind_speed_KPH'] = self.wind_speed.value
 
-        return super.capture(data)
+        return super().capture(data)
 
     def AAG_heater_algorithm(self, target, last_entry):
         """
@@ -747,7 +747,7 @@ class AAGCloudSensor(WeatherAbstract):
         max_sky_diff = max(sky_diff)
         last_cloud = current_values['sky_temp_C'] - current_values['ambient_temp_C']
 
-        return super._get_cloud_safety(max_sky_diff, last_cloud)
+        return super()._get_cloud_safety(max_sky_diff, last_cloud)
 
     def _get_wind_safety(self, current_values):
         # Wind (average and gusts)
@@ -766,26 +766,29 @@ class AAGCloudSensor(WeatherAbstract):
 
         wind_speed = max(wind_mavg)
 
-        return super._get_wind_safety(wind_speed, wind_gust)
+        return super()._get_wind_safety(wind_speed, wind_gust)
 
     def _get_rain_safety(self, current_values):
-        threshold_wet = self.thresholds.get('threshold_wet', 2000.)
-        threshold_rain = self.thresholds.get('threshold_rainy', 1700.)
+        safety_delay = self.safety_delay
 
-        rf_value = [x['rain_frequency'] for x in self.weather_entries if 'rain_frequency' in x.keys()]
+        statuses = super()._get_status()
 
-        if len(rf_value) == 0:
-            rain_flag = -1
-            wet_flag = -1
+        rain_sensor = statuses['rain_sensor']
 
-        if current_values['rain_frequency'] <= threshold_rain:
-            rain_flag = 1
-        elif current_values['rain_frequency'] > threshold_rain:
-            rain_flag = 0
+        if rain_sensor == 'rainy':
+            self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
+            rain_condition = 'Rain'
+            rain_safety = False
+        elif rain_sensor == 'wet':
+            self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
+            rain_condition = 'Wet'
+            rain_safety = False
+        elif rain_sensor == 'dry':
+            rain_condition = 'Dry'
+            rain_safety = True
+        else:
+            self.logger.debug('UNSAFE:  no rain data found')
+            rain_condition = 'Unknown'
+            rain_safety = False
 
-        if current_values['rain_frequency'] <= threshold_wet:
-            wet_flag = 1
-        elif current_values['rain_frequency'] > threshold_wet:
-            wet_flag = 0
-
-        return super._get_rain_safety(rain_flag, wet_flag)
+        return rain_condition, rain_safety
