@@ -108,6 +108,7 @@ class AAGCloudSensor(WeatherAbstract):
 
         self._safety_methods = {'Rain condition':self._get_rain_safety,
                                 'Wind condition':self._get_wind_safety,
+                                'Gust condition':self._get_gust_safety,
                                 'Cloud condition':self._get_cloud_safety}
 
         # Initialize Serial Connection

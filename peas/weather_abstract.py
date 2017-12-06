@@ -166,7 +166,7 @@ class WeatherAbstract(object):
 
         for col_name, thresholds in self.thresholds.items():
             # gets the value of the specfic "col_name"
-            current_value = self.current_values[col_name]
+            current_value = self.weather_entries[col_name]
             current_statuses[col_name] = 'invalid'
 
             for status, threshold in thresholds.items():
