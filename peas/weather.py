@@ -745,57 +745,64 @@ class AAGCloudSensor(WeatherAbstract):
                 ))
                 self.set_PWM(new_PWM)
 
-    def _get_cloud_safety(self, current_values):
+    def _get_cloud_safety(self):
         sky_diff = [x['sky_temp_C'] - x['ambient_temp_C']
                     for x in self.weather_entries
                     if ('ambient_temp_C' and 'sky_temp_C') in x.keys()]
-        max_sky_diff = max(sky_diff)
-        last_cloud = current_values['sky_temp_C'] - current_values['ambient_temp_C']
+                    
+        self.weather_entries['sky-ambient'] = max(sky_diff)
 
-        return super()._get_cloud_safety(max_sky_diff, last_cloud)
+        return super()._get_cloud_safety(statuses)
 
-    def _get_wind_safety(self, current_values):
-        # Wind (average and gusts)
+    def _get_wind_safety(self):
+        end_time = dt.utcnow()
+
         wind_speed = [x['wind_speed_KPH']
                       for x in self.weather_entries
                       if 'wind_speed_KPH' in x.keys()]
 
-        wind_gust = max(wind_speed)
-
         moving_avg_seconds = 120.
-        end_time = dt.utcnow()
-        start_time = date_parser(entries[0]['date'])
+
+        if type(start_time) == str:
+                start_time = date_parser(entries[0]['date'])
+
         typical_data_interval = (end_time - start_time).total_seconds() / len(entries)
-        mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))  # What is this 120?
+
+        mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))
         wind_mavg = movingaverage(wind_speed, mavg_count)
 
-        wind_speed = max(wind_mavg)
+        self.weather_entries['wind_speed'] = max(wind_mavg)
 
-        return super()._get_wind_safety(wind_speed, wind_gust)
+        return super()._get_wind_safety(statuses)
+
+    def _get_gust_safety(self):
+        wind_speed = [x['wind_speed_KPH']
+                      for x in self.weather_entries
+                      if 'wind_speed_KPH' in x.keys()]
+
+        self.weather_entries['wind_gust'] = max(wind_speed)
+
+        return super()._get_gust_safety(statuses)
 
     def _get_rain_safety(self, statuses):
         safety_delay = self.safety_delay
 
-        rain_sensor = statuses['rain_sensor']
+        rain_condition = statuses['rain_frequency']
 
-        if rain_sensor == 'rainy':
+        if rain_condition == 'rainy':
             self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
-            rain_condition = 'Rain'
             rain_safe = False
-        elif rain_sensor == 'wet':
+        elif rain_condition == 'wet':
             self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
-            rain_condition = 'Wet'
             rain_safe = False
-        elif rain_sensor == 'dry':
-            rain_condition = 'Dry'
-            rain_safe = True
-        elif rain_sensor == 'invalid':
+        elif rain_condition == 'invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
-            rain_condition = 'Invalid'
-            rain_safe
+            rain_safe = False
+        elif rain_condition == 'dry':
+            rain_safe = True
         else:
             self.logger.debug('UNSAFE:  no rain data found')
-            rain_condition = 'Unknown'
+            rain_condition = 'unknown'
             rain_safe = False
 
         return rain_condition, rain_safe

@@ -108,7 +108,7 @@ weather:
             calm: 0., 100.
             gusty: 100., 125.
             very_gusty: 125., .inf
-          rain_sensor:
+          rain_frequency:
             dry: 2200., .inf
             wet: 1800., 2200.
             rainy: 0, 1800.
