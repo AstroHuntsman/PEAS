@@ -106,6 +106,10 @@ class AAGCloudSensor(WeatherAbstract):
         self.logger = logging.getLogger(self.sensor_data.get('name'))
         self.logger.setLevel(logging.INFO)
 
+        self._safety_methods = {'Rain condition':self._get_rain_safety,
+                                'Wind condition':self._get_wind_safety,
+                                'Cloud condition':self._get_cloud_safety}
+
         # Initialize Serial Connection
         if serial_address is None:
             serial_address = self.sensor_data.get('serial_port', '/dev/ttyUSB0')
@@ -768,27 +772,29 @@ class AAGCloudSensor(WeatherAbstract):
 
         return super()._get_wind_safety(wind_speed, wind_gust)
 
-    def _get_rain_safety(self, current_values):
+    def _get_rain_safety(self, statuses):
         safety_delay = self.safety_delay
-
-        statuses = super()._get_status()
 
         rain_sensor = statuses['rain_sensor']
 
         if rain_sensor == 'rainy':
             self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
             rain_condition = 'Rain'
-            rain_safety = False
+            rain_safe = False
         elif rain_sensor == 'wet':
             self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
             rain_condition = 'Wet'
-            rain_safety = False
+            rain_safe = False
         elif rain_sensor == 'dry':
             rain_condition = 'Dry'
-            rain_safety = True
+            rain_safe = True
+        elif rain_sensor == 'invalid':
+            self.logger.debug('UNSAFE:  rain data is invalid')
+            rain_condition = 'Invalid'
+            rain_safe
         else:
             self.logger.debug('UNSAFE:  no rain data found')
             rain_condition = 'Unknown'
-            rain_safety = False
+            rain_safe = False
 
-        return rain_condition, rain_safety
+        return rain_condition, rain_safe
