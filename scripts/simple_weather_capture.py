@@ -1,8 +1,8 @@
 # -----------------------------------------------------------------------------
 # This needs to be removed - find a way to do this in command
 import sys
-sys.path.append("C:\\Users\\tiger\\Desktop\\HWM\\PEAS")
-sys.path.append("C:\\Users\\tiger\\Desktop\\HWM\\POCS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Desktop\\HWM\\PEAS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Desktop\\HWM\\POCS")
 # -----------------------------------------------------------------------------
 
 import datetime
@@ -14,7 +14,7 @@ from plotly import plotly
 from plotly import tools as plotly_tools
 
 from peas import weather
-from peas import weather_web_data
+from peas import internet_weather
 
 names = [
     'date',
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Online weather data
-    aat = weather_web_data.WeatherData()
+    aat = internet_weather.WeatherData()
 
     if args.plotly_stream:
         streams = None

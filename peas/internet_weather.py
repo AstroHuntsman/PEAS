@@ -145,7 +145,7 @@ class WeatherData(WeatherAbstract):
             rain_condition = 'Rain'
             rain_safe = False
         elif rain_sensor == 'no_rain' or rain_flag == 'no_rain':
-            rain_condition = 'No Rain':
+            rain_condition = 'No Rain'
             rain_safe = True
         elif rain_sensor == 'invalid' or rain_flag == 'invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
