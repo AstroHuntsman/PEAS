@@ -138,19 +138,19 @@ class WeatherData(WeatherAbstract):
 
         if rain_sensor == 'no_data' or rain_flag == 'no_data':
             self.logger.debug('UNSAFE:  no rain data found')
-            rain_condition = 'No Data'
+            rain_condition = 'no_data
             rain_safe = False
         elif rain_sensor == 'rain' or rain_flag == 'rain':
-            self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
-            rain_condition = 'Rain'
+            self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
+            rain_condition = 'rain'
             rain_safe = False
-        elif rain_sensor == 'no_rain' or rain_flag == 'no_rain':
-            rain_condition = 'No Rain'
-            rain_safe = True
         elif rain_sensor == 'invalid' or rain_flag == 'invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
-            rain_condition = 'Invalid'
+            rain_condition = 'invalid'
             rain_safe = False
+        elif rain_sensor == 'no_rain' or rain_flag == 'no_rain':
+            rain_condition = 'no_rain'
+            rain_safe = True
         else:
             self.logger.debug('UNSAFE:  unknown rain data')
             rain_condition = 'unknown'
@@ -169,7 +169,7 @@ class WeatherData(WeatherAbstract):
             self.logger.debug('UNSAFE:  no wetness data found')
             wetness_safe = False
         elif wetness_condition == 'wet':
-            self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
+            self.logger.debug('UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
             wetness_safe = False
         elif wetness_condition == 'invalid':
             self.logger.debug('UNSAFE:  wetness data is invalid')

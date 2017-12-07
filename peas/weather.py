@@ -749,7 +749,7 @@ class AAGCloudSensor(WeatherAbstract):
         sky_diff = [x['sky_temp_C'] - x['ambient_temp_C']
                     for x in self.weather_entries
                     if ('ambient_temp_C' and 'sky_temp_C') in x.keys()]
-                    
+
         self.weather_entries['sky-ambient'] = max(sky_diff)
 
         return super()._get_cloud_safety(statuses)
@@ -790,10 +790,10 @@ class AAGCloudSensor(WeatherAbstract):
         rain_condition = statuses['rain_frequency']
 
         if rain_condition == 'rainy':
-            self.logger.debug('UNSAFE:  Rain in last {} min.'.format(safety_delay))
+            self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
             rain_safe = False
         elif rain_condition == 'wet':
-            self.logger.debug('UNSAFE:  Wet in last {} min.'.format(safety_delay))
+            self.logger.debug('UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
             rain_safe = False
         elif rain_condition == 'invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
