@@ -138,7 +138,7 @@ class WeatherData(WeatherAbstract):
 
         if rain_sensor == 'no_data' or rain_flag == 'no_data':
             self.logger.debug('UNSAFE:  no rain data found')
-            rain_condition = 'no_data
+            rain_condition = 'no_data'
             rain_safe = False
         elif rain_sensor == 'rain' or rain_flag == 'rain':
             self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))

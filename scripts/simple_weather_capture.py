@@ -1,8 +1,8 @@
 # -----------------------------------------------------------------------------
 # This needs to be removed - find a way to do this in command
 import sys
-sys.path.append("C:\\Users\\tiger.JERMAINE\\Desktop\\HWM\\PEAS")
-sys.path.append("C:\\Users\\tiger.JERMAINE\\Desktop\\HWM\\POCS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\PEAS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\POCS")
 # -----------------------------------------------------------------------------
 
 import datetime
