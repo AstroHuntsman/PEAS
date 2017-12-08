@@ -161,6 +161,15 @@ class WeatherAbstract(object):
 
         return gust_condition, gust_safe
 
+    def _get_rain_safety(self, statuses):
+        """
+        Get the rain safety and weather condition.
+
+        Note: this only needs to be implemented when the rain data shares the same thresholds,
+        e.g. having two AAG cloud sensors or two met data files.
+        """
+        raise NotImplementedError
+
     def _get_status(self):
         current_statuses = {}
 
