@@ -599,33 +599,33 @@ class AAGCloudSensor(WeatherAbstract):
 
         self.logger.debug("Updating weather data")
 
-        data = {}
-        data['weather_data_from'] = self.sensor_data.get('name')
-        data['weather_sensor_firmware_version'] = self.firmware_version
-        data['weather_sensor_serial_number'] = self.serial_number
-        data['date'] = dt.utcnow()
+        current_values = {}
+        current_values['weather_data_from'] = self.sensor_data.get('name')
+        current_values['weather_sensor_firmware_version'] = self.firmware_version
+        current_values['weather_sensor_serial_number'] = self.serial_number
+        current_values['date'] = dt.utcnow()
 
         if self.get_sky_temperature():
-            data['sky_temp_C'] = self.sky_temp.value
+            current_values['sky_temp_C'] = self.sky_temp.value
         if self.get_ambient_temperature():
-            data['ambient_temp_C'] = self.ambient_temp.value
+            current_values['ambient_temp_C'] = self.ambient_temp.value
         self.get_values()
         if self.internal_voltage:
-            data['internal_voltage_V'] = self.internal_voltage.value
+            current_values['internal_voltage_V'] = self.internal_voltage.value
         if self.LDR_resistance:
-            data['ldr_resistance_Ohm'] = self.LDR_resistance.value
+            current_values['ldr_resistance_Ohm'] = self.LDR_resistance.value
         if self.rain_sensor_temp:
-            data['rain_sensor_temp_C'] = "{:.02f}".format(self.rain_sensor_temp.value)
+            current_values['rain_sensor_temp_C'] = "{:.02f}".format(self.rain_sensor_temp.value)
         if self.get_rain_frequency():
-            data['rain_frequency'] = self.rain_frequency
+            current_values['rain_frequency'] = self.rain_frequency
         if self.get_PWM():
-            data['pwm_value'] = self.PWM
+            current_values['pwm_value'] = self.PWM
         if self.get_errors():
-            data['errors'] = self.errors
+            current_values['errors'] = self.errors
         if self.get_wind_speed():
-            data['wind_speed_KPH'] = self.wind_speed.value
+            current_values['wind_speed_KPH'] = self.wind_speed.value
 
-        return super().capture(data)
+        return super().capture(current_values)
 
     def AAG_heater_algorithm(self, target, last_entry):
         """

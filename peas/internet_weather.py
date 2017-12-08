@@ -81,15 +81,15 @@ class WeatherData(WeatherAbstract):
     def capture(self, use_mongo=False, send_message=False, **kwargs):
         self.logger.debug('Updating weather data')
 
-        data = {}
+        current_values = {}
 
-        data['weather_data_from'] = self.web_config.get('name')
+        current_values['weather_data_from'] = self.web_config.get('name')
         self.table_data = self.fetch_met_data()
         col_names = self.web_config.get('column_names')
         for name in col_names:
-            data[name] = self.table_data[name][0]
+            current_values[name] = self.table_data[name][0]
 
-        return super().capture(data)
+        return super().capture(current_values)
 
     def fetch_met_data(self):
         try:
