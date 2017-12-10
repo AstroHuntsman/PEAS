@@ -35,9 +35,6 @@ class WeatherAbstract(object):
     """
 
     def __init__(self, use_mongo=True):
-        self.config = load_config()
-
-        self.thresholds = self.config.get('thresholds')
         self.safety_delay = self.config.get('safety_delay', 15.)
 
         self.db = None
@@ -45,7 +42,7 @@ class WeatherAbstract(object):
             self.db = get_mongodb()
 
         self.messaging = None
-        self.weather_entries = list()
+        self.weather_entries = {}
 
     def send_message(self, msg, channel='weather'):
         if self.messaging is None:
@@ -55,7 +52,7 @@ class WeatherAbstract(object):
 
     def capture(self, current_values):
         # Make Safety Decision and store current weather
-        current_weather = self.make_safety_decision(current_values)
+        current_weather = self.make_safety_decision()
         self.weather_entries.append(current_weather)
 
         if send_message:
@@ -66,13 +63,13 @@ class WeatherAbstract(object):
 
         return current_weather
 
-    def make_safety_decision(self, current_values):
+    def make_safety_decision(self):
 
         self.logger.debug('Making safety decision')
         self.logger.debug('Found {} weather data entries in last {:.0f} minutes'.format(
                           len(self.weather_entries), self.safety_delay))
 
-        current_status = self._get_status(current_values)
+        current_status = self._get_status()
 
         results = {}
         safe = True

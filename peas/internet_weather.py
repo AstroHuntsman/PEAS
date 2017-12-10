@@ -7,6 +7,7 @@ import astropy.units as u
 from astropy.units import cds
 from astropy.table import Table
 from astropy.time import Time, TimeISO, TimeDelta
+from astropy.utils.data import download_file
 
 from pocs.utils.messaging import PanMessaging
 from . import load_config
@@ -60,10 +61,12 @@ class WeatherData(WeatherAbstract):
     """
 
     def __init__(self, use_mongo=True):
-        super().__init__(use_mongo=use_mongo)
-
         # Read configuration
+        self.config = load_config()
         self.web_config = self.config['weather']['web_service']
+        self.thresholds = self.web_config['thresholds']
+
+        super().__init__(use_mongo=use_mongo)
 
         self.logger = logging.getLogger(self.web_config.get('name'))
         self.logger.setLevel(logging.INFO)
@@ -99,9 +102,14 @@ class WeatherData(WeatherAbstract):
 
         if cache_age > self.max_age:
             # Download met data file
-            m = requests.get(self.web_config.get('link'))
+            """
+            metdata_link = self.web_config.get('link')
+            metdata_file = download_file(metdata_link, cache=True)
+            m = open(metdata_file).read()
+            """
+            m = open('C:\\Users\\tiger.JERMAINE\\Downloads\\metdata1.dat').read()
             # Remove the annoying " and newline between the date and time
-            met = m.text.replace('."\n',' ')
+            met = m.replace('."\n',' ')
             # Remove the " before the date
             met = met.replace('" ', '')
 

@@ -98,10 +98,12 @@ class AAGCloudSensor(WeatherAbstract):
     """
 
     def __init__(self, serial_address=None, use_mongo=True):
-        super().__init__(use_mongo=use_mongo)
-
         # Read configuration
+        self.config = load_config()
         self.sensor_data = self.config['weather']['aag_cloud']
+        self.thresholds = self.sensor_data['thresholds']
+
+        super().__init__(use_mongo=use_mongo)
 
         self.logger = logging.getLogger(self.sensor_data.get('name'))
         self.logger.setLevel(logging.INFO)

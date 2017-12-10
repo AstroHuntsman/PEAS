@@ -15,7 +15,7 @@ weather:
     station: mongo
     web_service:
       name: 'aat-metdata'
-      link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metadata1.dat'
+      link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
       column_names:  ['Time (UTC)',
                       'outside_air_temperature',
                       'dome_air_temperature',
