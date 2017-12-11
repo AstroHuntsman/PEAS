@@ -113,20 +113,13 @@ def write_header(filename):
 
 def write_capture(filename=None, data=None):
     """ A function that reads the AAG weather can calls itself on a timer """
-    entry = "{},{},{},{},{},{},{},{:0.5f},{:0.5f},{},{},{},{}\n".format(
+    entry = "{},{},{},{},{},{}\n".format(
         data['date'].strftime('%Y-%m-%d %H:%M:%S'),
         data['safe'],
-        data['ambient_temp_C'],
-        data['sky_temp_C'],
-        data['rain_sensor_temp_C'],
-        data['rain_frequency'],
-        data['wind_speed_KPH'],
-        data['ldr_resistance_Ohm'],
-        data['pwm_value'],
-        data['gust_condition'],
-        data['wind_condition'],
-        data['sky_condition'],
-        data['rain_condition'],
+        data['gust condition'],
+        data['wind condition'],
+        data['sky condition'],
+        data['rain condition'],
     )
 
     if filename is not None:

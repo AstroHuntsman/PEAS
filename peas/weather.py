@@ -108,10 +108,10 @@ class AAGCloudSensor(WeatherAbstract):
         self.logger = logging.getLogger(self.sensor_data.get('name'))
         self.logger.setLevel(logging.INFO)
 
-        self._safety_methods = {'Rain condition':self._get_rain_safety,
-                                'Wind condition':self._get_wind_safety,
-                                'Gust condition':self._get_gust_safety,
-                                'Cloud condition':self._get_cloud_safety}
+        self._safety_methods = {'rain condition':self._get_rain_safety,
+                                'wind condition':self._get_wind_safety,
+                                'gust condition':self._get_gust_safety,
+                                'sky condition':self._get_cloud_safety}
 
         # Initialize Serial Connection
         if serial_address is None:
@@ -627,7 +627,7 @@ class AAGCloudSensor(WeatherAbstract):
         if self.get_wind_speed():
             current_values['wind_speed_KPH'] = self.wind_speed.value
 
-        return super().capture(current_values)
+        return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
 
     def AAG_heater_algorithm(self, target, last_entry):
         """

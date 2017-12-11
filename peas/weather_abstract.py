@@ -50,10 +50,10 @@ class WeatherAbstract(object):
 
         self.messaging.send_message(channel, msg)
 
-    def capture(self, current_values):
+    def capture(self, current_values, use_mongo=False, send_message=False, **kwargs):
         # Make Safety Decision and store current weather
+        self.weather_entries = current_values
         current_weather = self.make_safety_decision()
-        self.weather_entries.append(current_weather)
 
         if send_message:
             self.send_message({'data': current_weather}, channel='weather')
@@ -71,7 +71,7 @@ class WeatherAbstract(object):
 
         current_status = self._get_status()
 
-        results = {}
+        results = self.weather_entries
         safe = True
 
         for category, method in self._safety_methods.items():
@@ -79,7 +79,7 @@ class WeatherAbstract(object):
             results[category] = result[0]
             safe = safe and result[1]
 
-            results['Safe'] = safe
+            results['safe'] = safe
 
         return results
 
@@ -183,6 +183,6 @@ class WeatherAbstract(object):
                     if current_value > threshold[0] and current_value <= threshold[1]:
                         current_statuses[col_name] = status
                 else:
-                    raise ValueError("Threshold values should be 1 or 2 numbers, got {}!".format(len(threshold)))
+                    raise ValueError("Threshold values should be 1 or 2 numbers, got {} for {}!".format(len(threshold), col_name))
 
         return current_statuses

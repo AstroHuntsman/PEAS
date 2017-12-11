@@ -9,6 +9,8 @@ from astropy.table import Table
 from astropy.time import Time, TimeISO, TimeDelta
 from astropy.utils.data import download_file
 
+from datetime import datetime as dt
+
 from pocs.utils.messaging import PanMessaging
 from . import load_config
 from .weather_abstract import WeatherAbstract
@@ -73,11 +75,10 @@ class WeatherData(WeatherAbstract):
 
         self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
 
-        self._safety_methods = {'Rain condition':self._get_rain_safety,
-                                'Wetness condition':self._get_wetness_safety,
-                                'Wind condition':self._get_wind_safety,
-                                'Gust condition':self._get_gust_safety,
-                                'Cloud condition':self._get_cloud_safety}
+        self._safety_methods = {'rain condition':self._get_rain_safety and self._get_wetness_safety,
+                                'wind condition':self._get_wind_safety,
+                                'gust condition':self._get_gust_safety,
+                                'sky condition':self._get_cloud_safety}
 
         self.table_data = None
 
@@ -87,16 +88,17 @@ class WeatherData(WeatherAbstract):
         current_values = {}
 
         current_values['weather_data_from'] = self.web_config.get('name')
+        current_values['date'] = dt.utcnow()
         self.table_data = self.fetch_met_data()
         col_names = self.web_config.get('column_names')
         for name in col_names:
             current_values[name] = self.table_data[name][0]
 
-        return super().capture(current_values)
+        return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met_data(self):
         try:
-            cache_age = Time.now() - self._met_data['Time (UTC)'][0] * 86400
+            cache_age = Time.now() - self._met_data['Time (UTC)'][0]
         except AttributeError:
             cache_age = 1.382e10 * u.year
 
