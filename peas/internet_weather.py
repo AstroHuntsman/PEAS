@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 
-import requests
 import logging
 
 import astropy.units as u
@@ -11,16 +9,13 @@ from astropy.utils.data import download_file
 
 from datetime import datetime as dt
 
-from pocs.utils.messaging import PanMessaging
 from . import load_config
 from .weather_abstract import WeatherAbstract
 from .weather_abstract import get_mongodb
 
 
 class MixedUpTime(TimeISO):
-
-    """
-    Subclass the astropy.time.TimeISO time format to handle the mixed up
+    """Subclass the astropy.time.TimeISO time format to handle the mixed up
     American style time format that the AAT met system uses.
     """
 
@@ -36,30 +31,22 @@ class MixedUpTime(TimeISO):
                 '{mon:02d}-{day:02d}-{year:d}'))
 
 # -----------------------------------------------------------------------------
-# External weather data class
+#   AAT metdata Weather Data Class
 # -----------------------------------------------------------------------------
 class WeatherData(WeatherAbstract):
+    """Downloads the AAT weather met data and checks if the weather conditions
+    are safe.
 
-    """ Gets AAT weather data from  http://site.aao.gov.au/AATdatabase/met.html
+    Met data from the AAT is parsed into a table where specific entries are then
+    checked with customizable parameters to decide its condition and its safety.
+    Information of the met data is then able to be stored in mongodb and sent to
+    POCS.
 
-    Turns the weather data into a useable and meaningful table whose columns are the
-    entries of the data. The table only features one row (Excluding the title row)
-    which has the numerical data of all the entries.
-
-    The data is then compared with specified parameters and if the data is not within
-    the parameters then the safety condition of that entry is defined as False, i.e.
-    not safe.
-    Data is also given the weather condition, for example if the wind value is greater
-    that the one specified the weather condition will be 'windy'.
-
-    Once all the required data has been defined and given conditions, it will then
-    decide if the system is safe. If one value is False then the safety condition of
-    the system is False. All entries must be True so that the safety condition can
-    return True.
-
-    The final conditions and values are then sent to the dome controller to either
-    leave, open or close the dome. They are also saved in a database so that previous
-    entries can be retrived.
+    Attributes:
+        self.web_config: An dict that contains infromation about the met data.
+        self.thresholds: An array of the thresholds for weather entries.
+        self.logger: Used to create debugging messages.
+        self.max_age: Maximum age of met data that is to be retrieved.
     """
 
     def __init__(self, use_mongo=True):
@@ -70,25 +57,31 @@ class WeatherData(WeatherAbstract):
 
         super().__init__(use_mongo=use_mongo)
 
-        self.logger = logging.getLogger(self.web_config.get('name'))
-        self.logger.setLevel(logging.INFO)
+        self.logger = logging.getLogger(name=self.web_config.get('name'))
+        self.logger.setLevel(logging.DEBUG)
 
         self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
 
-        self._safety_methods = {'rain condition':self._get_rain_safety and self._get_wetness_safety,
-                                'wind condition':self._get_wind_safety,
-                                'gust condition':self._get_gust_safety,
-                                'sky condition':self._get_cloud_safety}
+        self._safety_methods = {'Rain condition':self._get_rain_safety and self._get_wetness_safety,
+                                'Wind condition':self._get_wind_safety,
+                                'Gust condition':self._get_gust_safety,
+                                'Sky condition':self._get_cloud_safety}
 
         self.table_data = None
 
     def capture(self, use_mongo=False, send_message=False, **kwargs):
+        """Update weather data
+
+        Args:
+            use_mongo:
+            send_message:
+        """
         self.logger.debug('Updating weather data')
 
         current_values = {}
 
-        current_values['weather_data_from'] = self.web_config.get('name')
-        current_values['date'] = dt.utcnow()
+        current_values['Weather data from'] = self.web_config.get('name')
+        current_values['Date'] = dt.utcnow()
         self.table_data = self.fetch_met_data()
         col_names = self.web_config.get('column_names')
         for name in col_names:
@@ -97,10 +90,16 @@ class WeatherData(WeatherAbstract):
         return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met_data(self):
+        """Fetches the AAT met data and parses it through a table
+
+        Returns:
+            Table of the AAT met data including the entries corresponding units.
+        """
         try:
-            cache_age = Time.now() - self._met_data['Time (UTC)'][0]
+            time_factor = 84600 * u.seconds
+            cache_age = Time.now() - self._met_data['Time (UTC)'][0] * time_factor
         except AttributeError:
-            cache_age = 1.382e10 * u.year
+            cache_age = 61. * u.second
 
         if cache_age > self.max_age:
             # Download met data file
@@ -110,9 +109,8 @@ class WeatherData(WeatherAbstract):
             m = open(metdata_file).read()
             """
             m = open('C:\\Users\\tiger.JERMAINE\\Downloads\\metdata1.dat').read()
-            # Remove the annoying " and newline between the date and time
+
             met = m.replace('."\n',' ')
-            # Remove the " before the date
             met = met.replace('" ', '')
 
             # Parse the tab delimited met data into a Table
@@ -141,29 +139,39 @@ class WeatherData(WeatherAbstract):
         return self._met_data
 
     def _get_rain_safety(self, statuses):
+        """Gets the rain safety and weather conditions
+
+        Args:
+            statuses: The status of the weather data.
+
+        Returns:
+            The rain condition and the rain safety. For example:
+
+            No data, False
+        """
         safety_delay = self.safety_delay
 
-        rain_sensor = statuses['rain_sensor']
-        rain_flag = statuses['boltwood_rain_flag']
+        rain_sensor = statuses['Rain sensor']
+        rain_flag = statuses['Boltwood rain flag']
 
-        if rain_sensor == 'no_data' or rain_flag == 'no_data':
+        if rain_sensor == 'No data' or rain_flag == 'No data':
             self.logger.debug('UNSAFE:  no rain data found')
-            rain_condition = 'no_data'
+            rain_condition = 'No data'
             rain_safe = False
-        elif rain_sensor == 'rain' or rain_flag == 'rain':
+        elif rain_sensor == 'Rain' or rain_flag == 'Rain':
             self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
-            rain_condition = 'rain'
+            rain_condition = 'Rain'
             rain_safe = False
-        elif rain_sensor == 'invalid' or rain_flag == 'invalid':
+        elif rain_sensor == 'Invalid' or rain_flag == 'Invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
-            rain_condition = 'invalid'
+            rain_condition = 'Invalid'
             rain_safe = False
-        elif rain_sensor == 'no_rain' or rain_flag == 'no_rain':
-            rain_condition = 'no_rain'
+        elif rain_sensor == 'No rain' or rain_flag == 'No rain':
+            rain_condition = 'No rain'
             rain_safe = True
         else:
             self.logger.debug('UNSAFE:  unknown rain data')
-            rain_condition = 'unknown'
+            rain_condition = 'Unknown'
             rain_safe = False
 
         self.logger.debug('Rain Condition: {} '.format(rain_condition))
@@ -171,24 +179,34 @@ class WeatherData(WeatherAbstract):
         return rain_condition, rain_safe
 
     def _get_wetness_safety(self, statuses):
+        """Gets the wetness safety and weather conditions
+
+        Args:
+            statuses: The status of the weather data.
+
+        Returns:
+            The wetness condition and the rain safety. For example:
+
+            Dry, True
+        """
         safety_delay = self.safety_delay
 
-        wetness_condition = statuses['boltwood_wet_flag']
+        wetness_condition = statuses['Boltwood wet flag']
 
-        if wetness_condition == 'no_data':
+        if wetness_condition == 'No data':
             self.logger.debug('UNSAFE:  no wetness data found')
             wetness_safe = False
-        elif wetness_condition == 'wet':
+        elif wetness_condition == 'Wet':
             self.logger.debug('UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
             wetness_safe = False
-        elif wetness_condition == 'invalid':
+        elif wetness_condition == 'Invalid':
             self.logger.debug('UNSAFE:  wetness data is invalid')
             wetness_safe = False
-        elif wetness_condition == 'dry':
+        elif wetness_condition == 'Dry':
             wetness_safe = True
         else:
             self.logger.debug('UNSAFE:  wetness data is unknown')
-            wetness_condition = 'unknown'
+            wetness_condition = 'Unknown'
             wetness_safe = False
 
         self.logger.debug('Wetness Condition: {} '.format(wetness_condition))

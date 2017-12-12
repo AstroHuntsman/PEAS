@@ -12,8 +12,6 @@ from dateutil.parser import parse as date_parser
 
 import astropy.units as u
 
-from pocs.utils.messaging import PanMessaging
-
 from . import load_config
 from .PID import PID
 from .weather_abstract import WeatherAbstract
@@ -108,10 +106,10 @@ class AAGCloudSensor(WeatherAbstract):
         self.logger = logging.getLogger(self.sensor_data.get('name'))
         self.logger.setLevel(logging.INFO)
 
-        self._safety_methods = {'rain condition':self._get_rain_safety,
-                                'wind condition':self._get_wind_safety,
-                                'gust condition':self._get_gust_safety,
-                                'sky condition':self._get_cloud_safety}
+        self._safety_methods = {'Rain condition':self._get_rain_safety,
+                                'Wind condition':self._get_wind_safety,
+                                'Gust condition':self._get_gust_safety,
+                                'Sky condition':self._get_cloud_safety}
 
         # Initialize Serial Connection
         if serial_address is None:
@@ -602,30 +600,30 @@ class AAGCloudSensor(WeatherAbstract):
         self.logger.debug("Updating weather data")
 
         current_values = {}
-        current_values['weather_data_from'] = self.sensor_data.get('name')
-        current_values['weather_sensor_firmware_version'] = self.firmware_version
-        current_values['weather_sensor_serial_number'] = self.serial_number
-        current_values['date'] = dt.utcnow()
+        current_values['Weather data from'] = self.sensor_data.get('name')
+        current_values['Weather sensor firmware version'] = self.firmware_version
+        current_values['Weather sensor serial number'] = self.serial_number
+        current_values['Date'] = dt.utcnow()
 
         if self.get_sky_temperature():
-            current_values['sky_temp_C'] = self.sky_temp.value
+            current_values['Sky temperature'] = self.sky_temp.value
         if self.get_ambient_temperature():
-            current_values['ambient_temp_C'] = self.ambient_temp.value
+            current_values['Ambient temperature'] = self.ambient_temp.value
         self.get_values()
         if self.internal_voltage:
-            current_values['internal_voltage_V'] = self.internal_voltage.value
+            current_values['Internal voltage'] = self.internal_voltage.value
         if self.LDR_resistance:
-            current_values['ldr_resistance_Ohm'] = self.LDR_resistance.value
+            current_values['LDR resistance'] = self.LDR_resistance.value
         if self.rain_sensor_temp:
-            current_values['rain_sensor_temp_C'] = "{:.02f}".format(self.rain_sensor_temp.value)
+            current_values['Rain sensor temperature'] = "{:.02f}".format(self.rain_sensor_temp.value)
         if self.get_rain_frequency():
-            current_values['rain_frequency'] = self.rain_frequency
+            current_values['Rain frequency'] = self.rain_frequency
         if self.get_PWM():
-            current_values['pwm_value'] = self.PWM
+            current_values['PWM value'] = self.PWM
         if self.get_errors():
-            current_values['errors'] = self.errors
+            current_values['Errors'] = self.errors
         if self.get_wind_speed():
-            current_values['wind_speed_KPH'] = self.wind_speed.value
+            current_values['Wind speed'] = self.wind_speed.value
 
         return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
 
@@ -636,7 +634,7 @@ class AAGCloudSensor(WeatherAbstract):
 
         Values are for the default read cycle of 10 seconds.
         """
-        deltaT = last_entry['rain_sensor_temp_C'] - target
+        deltaT = last_entry['Rain sensor temperature'] - target
         scaling = 0.5
         if deltaT > 8.:
             deltaPWM = -40 * scaling
@@ -686,9 +684,9 @@ class AAGCloudSensor(WeatherAbstract):
         last_entry = self.weather_entries[-1]
         rain_history = [x['rain_safe'] for x in entries if 'rain_safe' in x.keys()]
 
-        if 'ambient_temp_C' not in last_entry.keys():
+        if 'Ambient temperature' not in last_entry.keys():
             self.logger.warning('  Do not have Ambient Temperature measurement.  Can not determine PWM value.')
-        elif 'rain_sensor_temp_C' not in last_entry.keys():
+        elif 'Rain sensor temperature' not in last_entry.keys():
             self.logger.warning('  Do not have Rain Sensor Temperature measurement.  Can not determine PWM value.')
         else:
             # Decide whether to use the impulse heating mechanism
@@ -716,8 +714,8 @@ class AAGCloudSensor(WeatherAbstract):
 
             # Set PWM Based on Impulse Method or Normal Method
             if self.impulse_heating:
-                target_temp = float(last_entry['ambient_temp_C']) + float(self.heater_sensor_data['impulse_temp'])
-                if last_entry['rain_sensor_temp_C'] < target_temp:
+                target_temp = float(last_entry['Ambient temperature']) + float(self.heater_sensor_data['impulse_temp'])
+                if last_entry['Rain sensor temperature'] < target_temp:
                     self.logger.debug('  Rain sensor temp < target.  Setting heater to 100 %.')
                     self.set_PWM(100)
                 else:
@@ -725,21 +723,21 @@ class AAGCloudSensor(WeatherAbstract):
                     self.logger.debug('  Rain sensor temp > target.  Setting heater to {:d} %.'.format(new_PWM))
                     self.set_PWM(new_PWM)
             else:
-                if last_entry['ambient_temp_C'] < self.heater_sensor_data['low_temp']:
+                if last_entry['Ambient temperature'] < self.heater_sensor_data['low_temp']:
                     deltaT = self.heater_sensor_data['low_delta']
-                elif last_entry['ambient_temp_C'] > self.heater_sensor_data['high_temp']:
+                elif last_entry['Ambient temperature'] > self.heater_sensor_data['high_temp']:
                     deltaT = self.heater_sensor_data['high_delta']
                 else:
-                    frac = (last_entry['ambient_temp_C'] - self.heater_sensor_data['low_temp']) /\
+                    frac = (last_entry['Ambient temperature'] - self.heater_sensor_data['low_temp']) /\
                            (self.heater_sensor_data['high_temp'] - self.heater_sensor_data['low_temp'])
                     deltaT = self.heater_sensor_data['low_delta'] + frac * \
                         (self.heater_sensor_data['high_delta'] - self.heater_sensor_data['low_delta'])
-                target_temp = last_entry['ambient_temp_C'] + deltaT
-                new_PWM = int(self.heater_PID.recalculate(float(last_entry['rain_sensor_temp_C']),
+                target_temp = last_entry['Ambient temperature'] + deltaT
+                new_PWM = int(self.heater_PID.recalculate(float(last_entry['Rain sensor temperature']),
                                                           new_set_point=target_temp))
                 self.logger.debug('  last PID interval = {:.1f} s'.format(self.heater_PID.last_interval))
                 self.logger.debug('  target={:4.1f}, actual={:4.1f}, new PWM={:3.0f}, P={:+3.0f}, I={:+3.0f} ({:2d}), D={:+3.0f}'.format(
-                    target_temp, float(last_entry['rain_sensor_temp_C']),
+                    target_temp, float(last_entry['Rain sensor temperature']),
                     new_PWM, self.heater_PID.Kp * self.heater_PID.Pval,
                     self.heater_PID.Ki * self.heater_PID.Ival,
                     len(self.heater_PID.history),
@@ -748,20 +746,24 @@ class AAGCloudSensor(WeatherAbstract):
                 self.set_PWM(new_PWM)
 
     def _get_cloud_safety(self):
-        sky_diff = [x['sky_temp_C'] - x['ambient_temp_C']
+        """Gets Sky-ambient temperature to be used in base method."""
+        sky_diff = [x['Sky temperature'] - x['Ambient temperature']
                     for x in self.weather_entries
-                    if ('ambient_temp_C' and 'sky_temp_C') in x.keys()]
+                    if ('Ambient temperature' and 'Sky temperature') in x.keys()]
 
-        self.weather_entries['sky-ambient'] = max(sky_diff)
+        self.weather_entries['Sky-ambient'] = max(sky_diff)
 
         return super()._get_cloud_safety(statuses)
 
     def _get_wind_safety(self):
+        """Gets wind speed and assigns its moving average to the wind speed to
+        be used in the base method.
+        """
         end_time = dt.utcnow()
 
-        wind_speed = [x['wind_speed_KPH']
+        wind_speed = [x['Wind speed']
                       for x in self.weather_entries
-                      if 'wind_speed_KPH' in x.keys()]
+                      if 'Wind speed' in x.keys()]
 
         moving_avg_seconds = 120.
 
@@ -773,38 +775,54 @@ class AAGCloudSensor(WeatherAbstract):
         mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))
         wind_mavg = movingaverage(wind_speed, mavg_count)
 
-        self.weather_entries['wind_speed'] = max(wind_mavg)
+        self.weather_entries['Wind speed'] = max(wind_mavg)
 
         return super()._get_wind_safety(statuses)
 
     def _get_gust_safety(self):
-        wind_speed = [x['wind_speed_KPH']
+        """Gets wind speed and assigns its maximum value to the wind gust to be
+        used in the base method.
+        """
+        wind_speed = [x['Wind speed']
                       for x in self.weather_entries
-                      if 'wind_speed_KPH' in x.keys()]
+                      if 'Wind speed' in x.keys()]
 
-        self.weather_entries['wind_gust'] = max(wind_speed)
+        self.weather_entries['Wind gust'] = max(wind_speed)
 
         return super()._get_gust_safety(statuses)
 
     def _get_rain_safety(self, statuses):
+        """Gets the rain safety and weather conditions
+
+        Args:
+            statuses: The status of the weather data.
+
+        Returns:
+            The rain condition and the rain safety. For example:
+
+            Rainy, False
+        """
         safety_delay = self.safety_delay
 
-        rain_condition = statuses['rain_frequency']
+        rain_condition = statuses['Rain frequency']
 
-        if rain_condition == 'rainy':
+        if rain_condition == 'Rainy':
             self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
             rain_safe = False
-        elif rain_condition == 'wet':
+        elif rain_condition == 'Wet':
             self.logger.debug('UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
             rain_safe = False
-        elif rain_condition == 'invalid':
+        elif rain_condition == 'Invalid':
             self.logger.debug('UNSAFE:  rain data is invalid')
             rain_safe = False
-        elif rain_condition == 'dry':
+        elif rain_condition == 'Dry':
             rain_safe = True
         else:
             self.logger.debug('UNSAFE:  no rain data found')
-            rain_condition = 'unknown'
+            rain_condition = 'Unknown'
             rain_safe = False
+
+        self.logger.debug('Rain Condition: {} (Rain frequency is {})'.format(
+                          rain_condition, self.weather_entries['Rain frequency']))
 
         return rain_condition, rain_safe

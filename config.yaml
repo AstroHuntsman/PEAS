@@ -14,28 +14,28 @@ environment:
 weather:
     station: mongo
     web_service:
-      name: 'aat-metdata'
+      name: 'AAT met data file'
       link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
       column_names:  ['Time (UTC)',
-                      'outside_air_temperature',
-                      'dome_air_temperature',
-                      'mirror_temperature',
-                      'dome_dewpoint',
-                      'outside_humidity',
-                      'barometric_pressure',
-                      'wind_speed',
-                      'wind_gust',
-                      'wind_direction',
-                      'dome_door_status', # closed = 0 | partially open = 2 | open = 4
-                      'rain_sensor', # no rain = 0 | rain > 0
-                      'outside_dewpoint',
-                      'sky-ambient',
-                      'sky-ambient_uncertainty',
-                      'boltwood_sky_brightness', # dark = 0 | light > 0
-                      'boltwood_rain_flag', # no rain = 0 | rain > 0
-                      'boltwood_wet_flag', # dry = 0 | wet > 0
-                      'rain_since_9am',
-                      'SQM_sky_brightness']
+                      'Outside air temperature',
+                      'AAT dome air temperature',
+                      'AAT mirror temperature',
+                      'AAT dome dewpoint',
+                      'Outside humidity',
+                      'Barometric pressure',
+                      'Wind speed',
+                      'Wind gust',
+                      'Wind direction',
+                      'AAT dome door status', # closed = 0 | partially open = 2 | open = 4
+                      'Rain sensor', # no rain = 0 | rain > 0
+                      'Outside dewpoint',
+                      'Sky-ambient',
+                      'Sky-ambient uncertainty',
+                      'Boltwood sky brightness', # dark = 0 | light > 0
+                      'Boltwood rain flag', # no rain = 0 | rain > 0
+                      'Boltwood wet flag', # dry = 0 | wet > 0
+                      'Rain since 9am',
+                      'SQM sky brightness']
       # be sure to have the same number of entries in column_names and column_units
       column_units:  [u.dimensionless_unscaled,
                       u.Celsius,
@@ -59,32 +59,32 @@ weather:
                       u.ABmag]
       max_age: 60.
       thresholds:
-        sky-ambient:
-          clear:       [-.inf, 25.0]
-          cloudy:      [-25., -15.0]
-          very_cloudy: [-15., 0]
-        wind_speed:
-          calm:        [0.0, 50.0]
-          windy:       [50.0, 75.0]
-          very_windy:  [75.0, .inf]
-        wind_gust:
-          calm:        [0.0, 100.0]
-          gusty:       [100.0, 125.0]
-          very_gusty:  [125.0, .inf]
-        rain_sensor:
-          no_data:     [-1]
-          no_rain:     [0]
-          rain:        [1]
-        boltwood_rain_flag:
-          no_data:     [-1]
-          no_rain:     [0]
-          rain:        [1]
-        boltwood_wet_flag:
-          no_data:     [-1]
-          dry:         [0]
-          wet:         [1]
+        Sky-ambient:
+          Clear:       [-.inf, 25.0]
+          Cloudy:      [-25., -15.0]
+          Very cloudy: [-15., 0]
+        Wind speed:
+          Calm:        [0.0, 50.0]
+          Windy:       [50.0, 75.0]
+          Very Windy:  [75.0, .inf]
+        Wind gust:
+          Calm:        [0.0, 100.0]
+          Gusty:       [100.0, 125.0]
+          Very gusty:  [125.0, .inf]
+        Rain sensor:
+          No data:     [-1]
+          No rain:     [0]
+          Rain:        [1]
+        Boltwood rain flag:
+          No data:     [-1]
+          No rain:     [0]
+          Rain:        [1]
+        Boltwood wet flag:
+          No data:     [-1]
+          Dry:         [0]
+          Wet:         [1]
     aag_cloud:
-        name: 'aag-cloudsensor'
+        name: 'AAG Cloud Sensor'
         serial_port: '/dev/ttyUSB1'
         heater:
             low_temp: 0 ## deg C
@@ -96,22 +96,22 @@ weather:
             impulse_duration: 60 ## seconds
             impulse_cycle: 600 ## seconds
         thresholds:
-          sky-ambient:
-            clear:       [-.inf, 25.0]
-            cloudy:      [-25., -15.0]
-            very_cloudy: [-15., 0]
-          wind_speed:
-            calm:        [0.0, 50.0]
-            windy:       [50.0, 75.0]
-            very_windy:  [75.0, .inf]
-          wind_gust:
-            calm:        [0.0, 100.0]
-            gusty:       [100.0, 125.0]
-            very_gusty:  [125.0, .inf]
-          rain_frequency:
-            dry:         [2200.0, .inf]
-            wet:         [1800.0, 2200.0]
-            rainy:       [0, 1800.0]
+          Sky-ambient:
+            Clear:       [-.inf, 25.0]
+            Cloudy:      [-25., -15.0]
+            Very cloudy: [-15., 0]
+          Wind speed:
+            Calm:        [0.0, 50.0]
+            Windy:       [50.0, 75.0]
+            Very windy:  [75.0, .inf]
+          Wind gust:
+            Calm:        [0.0, 100.0]
+            Gusty:       [100.0, 125.0]
+            Very gusty:  [125.0, .inf]
+          Rain frequency:
+            Dry:         [2200.0, .inf]
+            Wet:         [1800.0, 2200.0]
+            Rainy:       [0, 1800.0]
     plot:
         amb_temp_limits: [-5, 35]
         cloudiness_limits: [-45, 5]

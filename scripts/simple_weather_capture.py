@@ -17,19 +17,19 @@ from peas import weather
 from peas import internet_weather
 
 names = [
-    'date',
-    'safe',
-    'ambient_temp_C',
-    'sky_temp_C',
-    'rain_sensor_temp_C',
-    'rain_frequency',
-    'wind_speed_KPH',
-    'ldr_resistance_Ohm',
-    'pwm_value',
-    'gust_condition',
-    'wind_condition',
-    'sky_condition',
-    'rain_condition',
+    'Date',
+    'Safe',
+    'Ambient temperature',
+    'Sky temperature',
+    'Rain sensor temperature',
+    'Rain frequency',
+    'Wind speed',
+    'LDR resistance',
+    'PWM value',
+    'Gust condition',
+    'Wind condition',
+    'Sky condition',
+    'Rain condition',
 ]
 
 header = ','.join(names)
@@ -76,7 +76,7 @@ def get_plot(filename=None):
     fig.append_trace(trace2, 2, 1)
     fig.append_trace(trace3, 3, 1)
 
-    fig['layout'].update(title="MQ Observatory Weather")
+    fig['layout'].update(title="Observatory Weather")
 
     fig['layout']['xaxis1'].update(title="Time [AEDT]")
 
@@ -112,14 +112,15 @@ def write_header(filename):
 
 
 def write_capture(filename=None, data=None):
-    """ A function that reads the AAG weather can calls itself on a timer """
-    entry = "{},{},{},{},{},{}\n".format(
-        data['date'].strftime('%Y-%m-%d %H:%M:%S'),
-        data['safe'],
-        data['gust condition'],
-        data['wind condition'],
-        data['sky condition'],
-        data['rain condition'],
+    """ A function that reads the weather can calls itself on a timer """
+    entry = "{} - {}\n\tSafe: {}, {}, {}, {}, {}.\n".format(
+        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
+        data['Weather data from'],
+        data['Safe'],
+        data['Gust condition'],
+        data['Wind condition'],
+        data['Sky condition'],
+        data['Rain condition'],
     )
 
     if filename is not None:
@@ -148,49 +149,29 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Online weather data
-    aat = internet_weather.WeatherData()
-
-    if args.plotly_stream:
-        streams = None
-        streams = get_plot(filename=args.filename)
-
-    while True:
-        data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-
-        # Save to file
-        if args.filename is not None:
-            write_capture(filename=args.filename, data=data)
-
-        if args.plotly_stream:
-            now = datetime.datetime.now()
-            streams['temp'].write({'x': now, 'y': data['ambient_temp_C']})
-            streams['cloudiness'].write({'x': now, 'y': data['sky_temp_C']})
-            streams['rain'].write({'x': now, 'y': data['rain_frequency']})
-
-        if not args.loop:
-            break
-
-        time.sleep(args.delay)
+    aat = internet_weather.WeatherData(use_mongo=args.store_mongo)
 
     # Weather object
-    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
+    """aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)"""
 
     if args.plotly_stream:
         streams = None
         streams = get_plot(filename=args.filename)
 
     while True:
-        data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        """aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)"""
+        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
 
         # Save to file
         if args.filename is not None:
-            write_capture(filename=args.filename, data=data)
+            write_capture(filename=args.filename, data=aat_data)
 
+        # Plot the weather data from the AAG sensor
         if args.plotly_stream:
             now = datetime.datetime.now()
-            streams['temp'].write({'x': now, 'y': data['ambient_temp_C']})
-            streams['cloudiness'].write({'x': now, 'y': data['sky_temp_C']})
-            streams['rain'].write({'x': now, 'y': data['rain_frequency']})
+            streams['temp'].write({'x': now, 'y': aag_data['Ambient temperature']})
+            streams['cloudiness'].write({'x': now, 'y': aag_data['Sky temperature']})
+            streams['rain'].write({'x': now, 'y': aag_data['Rain frequency']})
 
         if not args.loop:
             break
