@@ -16,24 +16,6 @@ from plotly import tools as plotly_tools
 from peas import weather
 from peas import internet_weather
 
-names = [
-    'Date',
-    'Safe',
-    'Ambient temperature',
-    'Sky temperature',
-    'Rain sensor temperature',
-    'Rain frequency',
-    'Wind speed',
-    'LDR resistance',
-    'PWM value',
-    'Gust condition',
-    'Wind condition',
-    'Sky condition',
-    'Rain condition',
-]
-
-header = ','.join(names)
-
 
 def get_plot(filename=None):
     stream_tokens = plotly_tools.get_credentials_file()['stream_ids']
@@ -105,22 +87,23 @@ def get_plot(filename=None):
     return streams
 
 
-def write_header(filename):
+def write_header(filename, name):
     # Write out the header to the CSV file
     with open(filename, 'w') as f:
-        f.write(header)
+        f.write(name)
 
 
 def write_capture(filename=None, data=None):
     """ A function that reads the weather can calls itself on a timer """
-    entry = "{} - {}\n\tSafe: {}, {}, {}, {}, {}.\n".format(
-        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
+    entry = "{}: {}, Safe={}, Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
         data['Weather data from'],
+        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
         data['Safe'],
         data['Gust condition'],
         data['Wind condition'],
         data['Sky condition'],
         data['Rain condition'],
+        data['Wetness condition']
     )
 
     if filename is not None:
@@ -137,7 +120,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--loop', action='store_true', default=True,
                         help="If should keep reading, defaults to True")
-    parser.add_argument("-d", "--delay", dest="delay", default=30.0, type=float,
+    parser.add_argument("-d", "--delay", dest="delay", default=60.0, type=float,
                         help="Interval to read weather")
     parser.add_argument("-f", "--filename", dest="filename", default=None,
                         help="Where to save results")

@@ -91,6 +91,11 @@ class WeatherAbstract(object):
 
         Args:
             statuses: The status of the weather data.
+
+        Returns:
+            The cloud condition and the cloud safety. For example:
+
+            'Very cloudy', False
         """
         safety_delay = self.safety_delay
 
@@ -126,7 +131,7 @@ class WeatherAbstract(object):
         Returns:
             The wind condition and the wind safety. For example:
 
-            Calm, True
+                'Calm', True
         """
         safety_delay = self.safety_delay
 
@@ -162,7 +167,7 @@ class WeatherAbstract(object):
         Returns:
             The gust conditiona and the gust safety. For example:
 
-            Very_gusy, False
+                'Very gusty', False
         """
         safety_delay = self.safety_delay
 
@@ -204,10 +209,11 @@ class WeatherAbstract(object):
 
     def _get_status(self):
         """Gets the status of the entries that have been given thresholds.
+
         Returns:
             A dictionary of the current statuses.For example:
 
-            {'Sky-ambient': Clear, 'Wind speed': Very windy, etc.}
+                {'Sky-ambient': 'Clear', 'Wind speed': 'Very windy', ... , etc. }
         """
         current_statuses = {}
 

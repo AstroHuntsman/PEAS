@@ -62,7 +62,8 @@ class WeatherData(WeatherAbstract):
 
         self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
 
-        self._safety_methods = {'Rain condition':self._get_rain_safety and self._get_wetness_safety,
+        self._safety_methods = {'Rain condition':self._get_rain_safety,
+                                'Wetness condition':self._get_wetness_safety,
                                 'Wind condition':self._get_wind_safety,
                                 'Gust condition':self._get_gust_safety,
                                 'Sky condition':self._get_cloud_safety}
@@ -70,7 +71,7 @@ class WeatherData(WeatherAbstract):
         self.table_data = None
 
     def capture(self, use_mongo=False, send_message=False, **kwargs):
-        """Update weather data
+        """Update weather data.
 
         Args:
             use_mongo:
@@ -103,9 +104,8 @@ class WeatherData(WeatherAbstract):
 
         if cache_age > self.max_age:
             # Download met data file
-            """
-            metdata_link = self.web_config.get('link')
-            metdata_file = download_file(metdata_link, cache=True)
+            """metdata_link = self.web_config.get('link')
+            metdata_file = download_file(metdata_link)
             m = open(metdata_file).read()
             """
             m = open('C:\\Users\\tiger.JERMAINE\\Downloads\\metdata1.dat').read()
@@ -147,7 +147,7 @@ class WeatherData(WeatherAbstract):
         Returns:
             The rain condition and the rain safety. For example:
 
-            No data, False
+                'No data', False
         """
         safety_delay = self.safety_delay
 
@@ -187,7 +187,7 @@ class WeatherData(WeatherAbstract):
         Returns:
             The wetness condition and the rain safety. For example:
 
-            Dry, True
+                'Dry', True
         """
         safety_delay = self.safety_delay
 

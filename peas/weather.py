@@ -800,7 +800,7 @@ class AAGCloudSensor(WeatherAbstract):
         Returns:
             The rain condition and the rain safety. For example:
 
-            Rainy, False
+                'Rainy', False
         """
         safety_delay = self.safety_delay
 
