@@ -93,8 +93,8 @@ def write_header(filename, name):
         f.write(name)
 
 
-def write_capture(filename=None, data=None):
-    """ A function that reads the weather can calls itself on a timer """
+def write_capture_aat(filename=None, data=None):
+    """ A function that reads the AAT met data weather can calls itself on a timer """
     entry = "{}: {}, Safe={}, Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
         data['Weather data from'],
         data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
@@ -104,6 +104,32 @@ def write_capture(filename=None, data=None):
         data['Sky condition'],
         data['Rain condition'],
         data['Wetness condition']
+    )
+
+    if filename is not None:
+        with open(filename, 'a') as f:
+            f.write(entry)
+
+def write_capture_aag(filename=None, data=None):
+    """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
+    entry = "{}: {}, Safe={}, Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
+        data['Weather data from'],
+        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
+        data['Safe'],
+        data['Gust condition'],
+        data['Wind condition'],
+        data['Sky condition'],
+        data['Rain condition']
+    )
+
+    if filename is not None:
+        with open(filename, 'a') as f:
+            f.write(entry)
+
+def write_final_safe(filename=None, data_1=None, data_2=None):
+    """ A function that reads the final safety result of the weather and can calls itself on a timer """
+    entry = "Final safety decision: {}.\n".format(
+        data_1['Safe'] & data_2['Safe']
     )
 
     if filename is not None:
@@ -131,30 +157,34 @@ if __name__ == '__main__':
     parser.add_argument('--send-message', action='store_true', default=True, help="Send message")
     args = parser.parse_args()
 
-    # Online weather data
+    # Weather objects
+    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
     aat = internet_weather.WeatherData(use_mongo=args.store_mongo)
-
-    # Weather object
-    """aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)"""
 
     if args.plotly_stream:
         streams = None
         streams = get_plot(filename=args.filename)
 
     while True:
-        """aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)"""
-        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-
-        # Save to file
+        aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        # Save AAG data to file
         if args.filename is not None:
-            write_capture(filename=args.filename, data=aat_data)
-
+            write_capture_aag(filename=args.filename, data=aag_data)
         # Plot the weather data from the AAG sensor
         if args.plotly_stream:
             now = datetime.datetime.now()
             streams['temp'].write({'x': now, 'y': aag_data['Ambient temperature']})
             streams['cloudiness'].write({'x': now, 'y': aag_data['Sky temperature']})
             streams['rain'].write({'x': now, 'y': aag_data['Rain frequency']})
+
+        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        # Save AAT data to file
+        if args.filename is not None:
+            write_capture_aat(filename=args.filename, data=aat_data)
+
+        # Save final safety result to file
+        if args.filename is not None:
+            write_final_safe(filename=args.filename, data_1=aag_data, data_2=aat_data)
 
         if not args.loop:
             break
