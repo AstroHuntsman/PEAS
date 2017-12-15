@@ -33,7 +33,7 @@ class MixedUpTime(TimeISO):
 # -----------------------------------------------------------------------------
 #   AAT metdata Weather Data Class
 # -----------------------------------------------------------------------------
-class WeatherData(WeatherAbstract):
+class AATMetData(WeatherAbstract):
     """Downloads the AAT weather met data and checks if the weather conditions
     are safe.
 

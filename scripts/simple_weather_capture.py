@@ -88,12 +88,10 @@ def get_plot(filename=None):
 
     return streams
 
-
 def write_header(filename, name):
     # Write out the header to the CSV file
     with open(filename, 'w') as f:
-        f.write(name)
-
+        f.write(name) 
 
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
@@ -137,7 +135,6 @@ def write_final_safe(filename=None, data_1=None, data_2=None):
     if filename is not None:
         with open(filename, 'a') as f:
             f.write(entry)
-
 
 if __name__ == '__main__':
     import argparse

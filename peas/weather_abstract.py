@@ -9,7 +9,7 @@ def get_mongodb():
 # -----------------------------------------------------------------------------
 #   Base Weather Abstract Class
 # -----------------------------------------------------------------------------
-class WeatherAbstract(object):
+class WeatherDataAbstract(object):
     """Base class for checking generic weather data.
 
     Parses the data through customizable parameters and assigns the corresponding
