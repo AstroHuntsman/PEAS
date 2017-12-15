@@ -9,6 +9,8 @@ import datetime
 import pandas
 import time
 
+from datetime import datetime as dt
+
 from plotly import graph_objs as plotly_go
 from plotly import plotly
 from plotly import tools as plotly_tools
@@ -96,14 +98,14 @@ def write_header(filename, name):
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
-        data['Weather data from'],
-        data['Date'].strftime('%d-%m-%Y %H:%M:%S'),
-        data['Safe'],
-        data['Gust condition'],
-        data['Wind condition'],
-        data['Sky condition'],
-        data['Rain condition'],
-        data['Wetness condition']
+        data['weather_data_name'],
+        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
+        data['safe'],
+        data['gust_condition'],
+        data['wind_condition'],
+        data['sky_condition'],
+        data['rain_condition'],
+        data['wetness_condition']
     )
 
     if filename is not None:
@@ -129,7 +131,7 @@ def write_capture_aag(filename=None, data=None):
 def write_final_safe(filename=None, data_1=None, data_2=None):
     """ A function that reads the final safety result of the weather and can calls itself on a timer """
     entry = "Final safety decision: {}.\n".format(
-        data_1['safe'] & data_2['Safe']
+        data_1['safe'] & data_2['safe']
     )
 
     if filename is not None:
@@ -146,7 +148,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--loop', action='store_true', default=True,
                         help="If should keep reading, defaults to True")
-    parser.add_argument("-d", "--delay", dest="delay", default=60.0, type=float,
+    parser.add_argument("-d", "--delay", dest="delay", default=0.0, type=float,
                         help="Interval to read weather")
     parser.add_argument("-f", "--filename", dest="filename", default=None,
                         help="Where to save results")
@@ -166,30 +168,20 @@ if __name__ == '__main__':
         streams = get_plot(filename=args.filename)
 
     while True:
-        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        # Save AAT data to file
-        if args.filename is not None:
-            write_capture_aat(filename=args.filename, data=aat_data)
-
         aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        # Save AAG data to file
+        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        # Save data to file
         if args.filename is not None:
             write_capture_aag(filename=args.filename, data=aag_data)
+            write_capture_aat(filename=args.filename, data=aat_data)
+            write_final_safe(filename=args.filename, data_1=aag_data, data_2=aat_data)
+
         # Plot the weather data from the AAG sensor
         if args.plotly_stream:
             now = datetime.datetime.now()
             streams['temp'].write({'x': now, 'y': aag_data['Ambient temperature']})
             streams['cloudiness'].write({'x': now, 'y': aag_data['Sky temperature']})
             streams['rain'].write({'x': now, 'y': aag_data['Rain frequency']})
-
-        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        # Save AAT data to file
-        if args.filename is not None:
-            write_capture_aat(filename=args.filename, data=aat_data)
-
-        # Save final safety result to file
-        if args.filename is not None:
-            write_final_safe(filename=args.filename, data_1=aag_data, data_2=aat_data)
 
         if not args.loop:
             break

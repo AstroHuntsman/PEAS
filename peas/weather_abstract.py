@@ -17,15 +17,12 @@ class WeatherAbstract(object):
     conditions. Conditions are stored in mongodb and sent to POCS.
 
     Attributes:
-        self.safety_delay:
         self.db:
         self.messaging:
         self.weather_entries:
     """
 
     def __init__(self, use_mongo=True):
-        self.safety_delay = self.config.get('safety_delay', 15.)
-
         self.db = None
         if use_mongo:
             self.db = get_mongodb()
@@ -40,7 +37,7 @@ class WeatherAbstract(object):
 
         self.messaging.send_message(channel, msg)
 
-    def capture(self, current_values, use_mongo=False, send_message=False, **kwargs):
+    def capture(self, use_mongo=False, send_message=False, **kwargs):
         """Gets result from safety conditions and stores the current data
 
         Args:
@@ -51,11 +48,10 @@ class WeatherAbstract(object):
         Returns:
 
         """
-        self.weather_entries = current_values
         current_weather = self.make_safety_decision()
 
         if send_message:
-            self.send_message({'Data': current_weather}, channel='weather')
+            self.send_message({'data': current_weather}, channel='weather')
 
         if use_mongo:
             self.db.insert_current('Weather', current_weather)
@@ -69,22 +65,18 @@ class WeatherAbstract(object):
             Dictionary of the weather data plus the safety condition.
         """
         self.logger.debug('Making safety decision')
-        self.logger.debug('Found {} weather data entries in last {:.0f} minutes'.format(
-                          len(self.weather_entries), self.safety_delay))
 
-        current_status = self._get_status()
-
-        results = self.weather_entries
+        status = self._get_status()
         safe = True
 
         for category, method in self._safety_methods.items():
-            result = method(current_status)
-            results[category] = result[0]
+            result = method(status)
+            self.weather_entries[category] = result[0]
             safe = safe and result[1]
 
-            results['Safe'] = safe
+            self.weather_entries['safe'] = safe
 
-        return results
+        return self.weather_entries
 
     def _get_cloud_safety(self, statuses):
         """Gets the sky safety and weather conditions
@@ -97,28 +89,23 @@ class WeatherAbstract(object):
 
             'Very cloudy', False
         """
-        safety_delay = self.safety_delay
 
-        cloud_condition = statuses['Sky-ambient']
+        cloud_condition = statuses['sky-ambient']
 
         if cloud_condition == 'Very cloudy':
-            self.logger.debug('UNSAFE:  Very cloudy in last {:.0f} min.'.format(safety_delay))
             cloud_safe = False
         elif cloud_condition == 'Cloudy':
-            self.logger.debug('UNSAFE:  Cloudy in last {:.0f} min.'.format(safety_delay))
             cloud_safe = False
         elif cloud_condition == 'Invalid':
-            self.logger.debug('UNSAFE:  Cloud condition is invalid.')
             cloud_safe = False
         elif cloud_condition == 'Clear':
             cloud_safe = True
         else:
-            self.logger.debug('UNSAFE:  Cloud condition is unknown.')
             cloud_condition = 'Unknown'
             cloud_safe = False
 
         self.logger.debug('Cloud Condition: {} (Sky-ambient is {})'.format(
-                          cloud_condition, self.weather_entries['Sky-ambient']))
+                          cloud_condition, self.weather_entries['sky-ambient']))
 
         return cloud_condition, cloud_safe
 
@@ -133,28 +120,23 @@ class WeatherAbstract(object):
 
                 'Calm', True
         """
-        safety_delay = self.safety_delay
 
-        wind_condition = statuses['Wind speed']
+        wind_condition = statuses['wind_speed']
 
         if wind_condition == 'Very windy':
-            self.logger.debug('UNSAFE:  Very windy in last {:.0f} min.'.format(safety_delay))
             wind_safe = False
         elif wind_condition == 'Windy':
-            self.logger.debug('UNSAFE:  Windy in last {:.0f} min.'.format(safety_delay))
             wind_safe = False
         elif wind_condition == 'Invalid':
-            self.logger.debug('UNSAFE:  Wind condition is invalid')
             wind_safe = False
         elif wind_condition == 'Calm':
             wind_safe = True
         else:
-            self.logger.debug('UNSAFE:  Wind condition is unknown.')
             wind_condition = 'Unknown'
             wind_safe = False
 
         self.logger.debug('Wind Condition: {} (Wind speed is {})'.format(
-                          wind_condition,  self.weather_entries['Wind speed']))
+                          wind_condition,  self.weather_entries['wind_speed']))
 
         return wind_condition, wind_safe
 
@@ -169,28 +151,23 @@ class WeatherAbstract(object):
 
                 'Very gusty', False
         """
-        safety_delay = self.safety_delay
 
-        gust_condition = statuses['Wind gust']
+        gust_condition = statuses['wind_gust']
 
         if gust_condition == 'Very gusty':
-            self.logger.debug('UNSAFE:  Very gusty in last {:.0f} min.'.format(safety_delay))
             gust_safe = False
         elif gust_condition == 'Gusty':
-            self.logger.debug('UNSAFE:  Gusty in last {:.0f} min.'.format(safety_delay))
             gust_safe = False
         elif gust_condition == 'Invalid':
-            self.logger.debug('UNSAFE:  Gust condition is invalid.')
             gust_safe = False
         elif gust_condition == 'Calm':
             gust_safe = True
         else:
-            self.logger.debug('UNSAFE:  Gust condition is unknown.')
             gust_condition = 'Unknown'
             gust_safe = False
 
         self.logger.debug('Gust condition: {} (Gust speed is {})'.format(
-                          gust_condition,  self.weather_entries['Wind gust']))
+                          gust_condition,  self.weather_entries['wind_gust']))
 
         return gust_condition, gust_safe
 
@@ -213,7 +190,7 @@ class WeatherAbstract(object):
         Returns:
             A dictionary of the current statuses.For example:
 
-                {'Sky-ambient': 'Clear', 'Wind speed': 'Very windy', ... , etc. }
+                {'sky-ambient': 'Clear', 'wind_speed': 'Very windy', ... , etc. }
         """
         current_statuses = {}
 

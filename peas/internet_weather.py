@@ -62,11 +62,11 @@ class WeatherData(WeatherAbstract):
 
         self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
 
-        self._safety_methods = {'Rain condition':self._get_rain_safety,
-                                'Wetness condition':self._get_wetness_safety,
-                                'Wind condition':self._get_wind_safety,
-                                'Gust condition':self._get_gust_safety,
-                                'Sky condition':self._get_cloud_safety}
+        self._safety_methods = {'rain_condition':self._get_rain_safety,
+                                'wetness_condition':self._get_wetness_safety,
+                                'wind_condition':self._get_wind_safety,
+                                'gust_condition':self._get_gust_safety,
+                                'sky_condition':self._get_cloud_safety}
 
         self.table_data = None
 
@@ -74,16 +74,18 @@ class WeatherData(WeatherAbstract):
         """ Update weather data. """
         self.logger.debug('Updating weather data')
 
-        current_values = {}
+        data = {}
 
-        current_values['Weather data from'] = self.web_config.get('name')
-        current_values['Date'] = dt.utcnow()
+        data['weather_data_name'] = self.web_config.get('name')
+        data['date'] = dt.utcnow()
         self.table_data = self.fetch_met_data()
         col_names = self.web_config.get('column_names')
         for name in col_names:
-            current_values[name] = self.table_data[name][0]
+            data[name] = self.table_data[name][0]
 
-        return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
+        self.weather_entries = data
+
+        return super().capture(use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met_data(self):
         """Fetches the AAT met data and parses it through a table
@@ -93,7 +95,7 @@ class WeatherData(WeatherAbstract):
         """
         try:
             time_factor = 84600 * u.seconds
-            cache_age = Time.now() - self._met_data['Time (UTC)'][0] * time_factor
+            cache_age = Time.now() - self._met_data['time_UTC'][0] * time_factor
         except AttributeError:
             cache_age = 61. * u.second
 
@@ -101,8 +103,8 @@ class WeatherData(WeatherAbstract):
             # Download met data file
             """metdata_link = self.web_config.get('link')
             metdata_file = download_file(metdata_link)
-            m = open(metdata_file).read()
-            """
+            m = open(metdata_file).read()"""
+
             m = open('C:\\Users\\tiger.JERMAINE\\Downloads\\metdata1.dat').read()
 
             met = m.replace('."\n',' ')
@@ -113,11 +115,11 @@ class WeatherData(WeatherAbstract):
                                 names=self.web_config.get('column_names'))
 
             # Convert time strings to Time
-            t['Time (UTC)'] = Time(t['Time (UTC)'], format='mixed_up_time')
+            t['time_UTC'] = Time(t['time_UTC'], format='mixed_up_time')
             # Change string format to ISO
-            t['Time (UTC)'].format = 'iso'
+            t['time_UTC'].format = 'iso'
             # Convert from AAT standard time to UTC
-            t['Time (UTC)'] = t['Time (UTC)'] - 10 * u.hour
+            t['time_UTC'] = t['time_UTC'] - 10 * u.hour
 
             col_names = self.web_config.get('column_names')
             col_units = self.web_config.get('column_units')
@@ -144,28 +146,23 @@ class WeatherData(WeatherAbstract):
 
                 'No data', False
         """
-        safety_delay = self.safety_delay
 
-        rain_sensor = statuses['Rain sensor']
-        rain_flag = statuses['Boltwood rain flag']
+        rain_sensor = statuses['rain_sensor']
+        rain_flag = statuses['boltwood_rain_flag']
 
         if rain_sensor == 'No data' or rain_flag == 'No data':
-            self.logger.debug('UNSAFE:  no rain data found')
             rain_condition = 'No data'
             rain_safe = False
         elif rain_sensor == 'Rain' or rain_flag == 'Rain':
-            self.logger.debug('UNSAFE:  Rain in last {:.0f} min.'.format(safety_delay))
             rain_condition = 'Rain'
             rain_safe = False
         elif rain_sensor == 'Invalid' or rain_flag == 'Invalid':
-            self.logger.debug('UNSAFE:  rain data is invalid')
             rain_condition = 'Invalid'
             rain_safe = False
         elif rain_sensor == 'No rain' or rain_flag == 'No rain':
             rain_condition = 'No rain'
             rain_safe = True
         else:
-            self.logger.debug('UNSAFE:  unknown rain data')
             rain_condition = 'Unknown'
             rain_safe = False
 
@@ -184,23 +181,18 @@ class WeatherData(WeatherAbstract):
 
                 'Dry', True
         """
-        safety_delay = self.safety_delay
 
-        wetness_condition = statuses['Boltwood wet flag']
+        wetness_condition = statuses['boltwood_wet_flag']
 
         if wetness_condition == 'No data':
-            self.logger.debug('UNSAFE:  no wetness data found')
             wetness_safe = False
         elif wetness_condition == 'Wet':
-            self.logger.debug('UNSAFE:  Wet in last {:.0f} min.'.format(safety_delay))
             wetness_safe = False
         elif wetness_condition == 'Invalid':
-            self.logger.debug('UNSAFE:  wetness data is invalid')
             wetness_safe = False
         elif wetness_condition == 'Dry':
             wetness_safe = True
         else:
-            self.logger.debug('UNSAFE:  wetness data is unknown')
             wetness_condition = 'Unknown'
             wetness_safe = False
 

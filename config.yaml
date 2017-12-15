@@ -16,26 +16,26 @@ weather:
     web_service:
       name: 'AAT met data'
       link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
-      column_names:  ['Time (UTC)',
-                      'Outside air temperature',
-                      'AAT dome air temperature',
-                      'AAT mirror temperature',
-                      'AAT dome dewpoint',
-                      'Outside humidity',
-                      'Barometric pressure',
-                      'Wind speed',
-                      'Wind gust',
-                      'Wind direction',
-                      'AAT dome door status', # closed = 0 | partially open = 2 | open = 4
-                      'Rain sensor', # no rain = 0 | rain > 0
-                      'Outside dewpoint',
-                      'Sky-ambient',
-                      'Sky-ambient uncertainty',
-                      'Boltwood sky brightness', # dark = 0 | light > 0
-                      'Boltwood rain flag', # no rain = 0 | rain > 0
-                      'Boltwood wet flag', # dry = 0 | wet > 0
-                      'Rain since 9am',
-                      'SQM sky brightness']
+      column_names:  ['time_UTC',
+                      'outside_air_temperature',
+                      'AAT_dome_air_temperature',
+                      'AAT_mirror_temperature',
+                      'AAT_dome_dewpoint',
+                      'outside_humidity',
+                      'barometric_pressure',
+                      'wind_speed',
+                      'wind_gust',
+                      'wind_direction',
+                      'AAT_dome_door_status', # closed = 0 | partially open = 2 | open = 4
+                      'rain_sensor', # no rain = 0 | rain > 0
+                      'outside_dewpoint',
+                      'sky-ambient',
+                      'sky-ambient_uncertainty',
+                      'boltwood_sky_brightness', # dark = 0 | light > 0
+                      'boltwood_rain_flag', # no rain = 0 | rain > 0
+                      'boltwood_wet_flag', # dry = 0 | wet > 0
+                      'rain_since_9am',
+                      'SQM_sky_brightness']
       # be sure to have the same number of entries in column_names and column_units
       column_units:  [u.dimensionless_unscaled,
                       u.Celsius,
@@ -59,27 +59,27 @@ weather:
                       u.ABmag]
       max_age: 60.
       thresholds:
-        Sky-ambient:
+        sky-ambient:
           Clear:       [-.inf, 25.0]
           Cloudy:      [-25., -15.0]
           Very cloudy: [-15., 0]
-        Wind speed:
+        wind_speed:
           Calm:        [0.0, 50.0]
           Windy:       [50.0, 75.0]
           Very Windy:  [75.0, .inf]
-        Wind gust:
+        wind_gust:
           Calm:        [0.0, 100.0]
           Gusty:       [100.0, 125.0]
           Very gusty:  [125.0, .inf]
-        Rain sensor:
+        rain_sensor:
           No data:     [-1]
           No rain:     [0]
           Rain:        [1]
-        Boltwood rain flag:
+        boltwood_rain_flag:
           No data:     [-1]
           No rain:     [0]
           Rain:        [1]
-        Boltwood wet flag:
+        boltwood_wet_flag:
           No data:     [-1]
           Dry:         [0]
           Wet:         [1]
