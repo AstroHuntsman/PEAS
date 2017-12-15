@@ -95,16 +95,13 @@ def write_header(filename, name):
 
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
-    entry = "{} ({}), Safe={}, Gust={} ({} km/h), Wind={} ({} km/h), Sky={} ({} *C), Rain={}, Wetness={}.\n".format(
+    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
         data['Weather data from'],
-        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
+        data['Date'].strftime('%d-%m-%Y %H:%M:%S'),
         data['Safe'],
         data['Gust condition'],
-        data['Wind gust'],
         data['Wind condition'],
-        data['Wind speed'],
         data['Sky condition'],
-        data['Sky-ambient'],
         data['Rain condition'],
         data['Wetness condition']
     )
@@ -115,25 +112,14 @@ def write_capture_aat(filename=None, data=None):
 
 def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
-    entry = "{} {}, S/N={} ({}) Safe={}, Gust={}, Wind={}, Sky={}, Rain={}. Values: {} *C, {} *C, {} V, {} Ohms, {} *C, {}, {}, {}, {} km/h.\n".format(
-        data['Weather data from'],
-        data['Weather sensor firmware version'],
-        data['Weather sensor serial number'],
-        data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
-        data['Safe'],
-        data['Gust condition'],
-        data['Wind condition'],
-        data['Sky condition'],
-        data['Rain condition'],
-        data['Sky temperature'],
-        data['Ambient temperature'],
-        data['Internal voltage'],
-        data['LDR resistance'],
-        data['Rain sensor temperature'],
-        data['Rain frequency'],
-        data['PWM value'],
-        data['Errors'],
-        data['Wind speed']
+    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
+        data['weather_sensor_name'],
+        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
+        data['safe'],
+        data['gust_condition'],
+        data['wind_condition'],
+        data['sky_condition'],
+        data['rain_condition'],
     )
 
     if filename is not None:
@@ -143,7 +129,7 @@ def write_capture_aag(filename=None, data=None):
 def write_final_safe(filename=None, data_1=None, data_2=None):
     """ A function that reads the final safety result of the weather and can calls itself on a timer """
     entry = "Final safety decision: {}.\n".format(
-        data_1['Safe'] & data_2['Safe']
+        data_1['safe'] & data_2['Safe']
     )
 
     if filename is not None:
@@ -172,14 +158,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Weather objects
-    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
     aat = internet_weather.WeatherData(use_mongo=args.store_mongo)
+    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
 
     if args.plotly_stream:
         streams = None
         streams = get_plot(filename=args.filename)
 
     while True:
+        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        # Save AAT data to file
+        if args.filename is not None:
+            write_capture_aat(filename=args.filename, data=aat_data)
+
         aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         # Save AAG data to file
         if args.filename is not None:

@@ -14,7 +14,7 @@ environment:
 weather:
     station: mongo
     web_service:
-      name: 'AAT met data file'
+      name: 'AAT met data'
       link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
       column_names:  ['Time (UTC)',
                       'Outside air temperature',
@@ -84,8 +84,17 @@ weather:
           Dry:         [0]
           Wet:         [1]
     aag_cloud:
-        name: 'AAG Cloud Sensor'
-        serial_port: '/dev/ttyUSB1'
+        name: 'AAG CloudWatcher'
+        serial_port: 'COM4'
+        threshold_cloudy: -25
+        threshold_very_cloudy: -15.
+        threshold_windy: 50.
+        threshold_very_windy: 75.
+        threshold_gusty: 100.
+        threshold_very_gusty: 125.
+        threshold_wet: 2200.
+        threshold_rainy: 1800.
+        safety_delay: 15 ## minutes
         heater:
             low_temp: 0 ## deg C
             low_delta: 6 ## deg C
@@ -95,23 +104,6 @@ weather:
             impulse_temp: 10 ## deg C
             impulse_duration: 60 ## seconds
             impulse_cycle: 600 ## seconds
-        thresholds:
-          Sky-ambient:
-            Clear:       [-.inf, 25.0]
-            Cloudy:      [-25., -15.0]
-            Very cloudy: [-15., 0]
-          Wind speed:
-            Calm:        [0.0, 50.0]
-            Windy:       [50.0, 75.0]
-            Very windy:  [75.0, .inf]
-          Wind gust:
-            Calm:        [0.0, 100.0]
-            Gusty:       [100.0, 125.0]
-            Very gusty:  [125.0, .inf]
-          Rain frequency:
-            Dry:         [2200.0, .inf]
-            Wet:         [1800.0, 2200.0]
-            Rainy:       [0, 1800.0]
     plot:
         amb_temp_limits: [-5, 35]
         cloudiness_limits: [-45, 5]
