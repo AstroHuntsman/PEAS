@@ -58,7 +58,7 @@ class WeatherData(WeatherAbstract):
         super().__init__(use_mongo=use_mongo)
 
         self.logger = logging.getLogger(name=self.web_config.get('name'))
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
 
         self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
 
@@ -71,12 +71,7 @@ class WeatherData(WeatherAbstract):
         self.table_data = None
 
     def capture(self, use_mongo=False, send_message=False, **kwargs):
-        """Update weather data.
-
-        Args:
-            use_mongo:
-            send_message:
-        """
+        """ Update weather data. """
         self.logger.debug('Updating weather data')
 
         current_values = {}

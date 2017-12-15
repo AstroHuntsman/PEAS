@@ -95,13 +95,16 @@ def write_header(filename, name):
 
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
-    entry = "{}: {}, Safe={}, Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
+    entry = "{} ({}), Safe={}, Gust={} ({} km/h), Wind={} ({} km/h), Sky={} ({} *C), Rain={}, Wetness={}.\n".format(
         data['Weather data from'],
         data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
         data['Safe'],
         data['Gust condition'],
+        data['Wind gust'],
         data['Wind condition'],
+        data['Wind speed'],
         data['Sky condition'],
+        data['Sky-ambient'],
         data['Rain condition'],
         data['Wetness condition']
     )
@@ -112,14 +115,25 @@ def write_capture_aat(filename=None, data=None):
 
 def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
-    entry = "{}: {}, Safe={}, Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
+    entry = "{} {}, S/N={} ({}) Safe={}, Gust={}, Wind={}, Sky={}, Rain={}. Values: {} *C, {} *C, {} V, {} Ohms, {} *C, {}, {}, {}, {} km/h.\n".format(
         data['Weather data from'],
+        data['Weather sensor firmware version'],
+        data['Weather sensor serial number'],
         data['Date'].strftime('%Y-%m-%d %H:%M:%S'),
         data['Safe'],
         data['Gust condition'],
         data['Wind condition'],
         data['Sky condition'],
-        data['Rain condition']
+        data['Rain condition'],
+        data['Sky temperature'],
+        data['Ambient temperature'],
+        data['Internal voltage'],
+        data['LDR resistance'],
+        data['Rain sensor temperature'],
+        data['Rain frequency'],
+        data['PWM value'],
+        data['Errors'],
+        data['Wind speed']
     )
 
     if filename is not None:

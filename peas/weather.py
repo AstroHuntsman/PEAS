@@ -104,7 +104,7 @@ class AAGCloudSensor(WeatherAbstract):
         super().__init__(use_mongo=use_mongo)
 
         self.logger = logging.getLogger(self.sensor_data.get('name'))
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
 
         self._safety_methods = {'Rain condition':self._get_rain_safety,
                                 'Wind condition':self._get_wind_safety,
@@ -609,6 +609,9 @@ class AAGCloudSensor(WeatherAbstract):
             current_values['Sky temperature'] = self.sky_temp.value
         if self.get_ambient_temperature():
             current_values['Ambient temperature'] = self.ambient_temp.value
+
+        current_values['Sky-ambient'] = current_values['Sky temperature'] - current_values['Ambient temperature']
+
         self.get_values()
         if self.internal_voltage:
             current_values['Internal voltage'] = self.internal_voltage.value
@@ -624,6 +627,8 @@ class AAGCloudSensor(WeatherAbstract):
             current_values['Errors'] = self.errors
         if self.get_wind_speed():
             current_values['Wind speed'] = self.wind_speed.value
+            current_values['Wind gust'] = self.wind_speed.value
+
 
         return super().capture(current_values, use_mongo=False, send_message=False, **kwargs)
 
@@ -745,46 +750,30 @@ class AAGCloudSensor(WeatherAbstract):
                 ))
                 self.set_PWM(new_PWM)
 
-    def _get_cloud_safety(self):
+    def _get_cloud_safety(self, statuses):
         """Gets Sky-ambient temperature to be used in base method."""
         sky_diff = [x['Sky temperature'] - x['Ambient temperature']
-                    for x in self.weather_entries
+                    for x in entries
                     if ('Ambient temperature' and 'Sky temperature') in x.keys()]
 
-        self.weather_entries['Sky-ambient'] = max(sky_diff)
+        self.weather_entries['Sky-ambient'] = self.sky_temp.value - self.ambient_temp.value
 
         return super()._get_cloud_safety(statuses)
 
-    def _get_wind_safety(self):
-        """Gets wind speed and assigns its moving average to the wind speed to
-        be used in the base method.
+    def _get_wind_safety(self, statuses):
+        """Gets wind speed
         """
-        end_time = dt.utcnow()
 
-        wind_speed = [x['Wind speed']
-                      for x in self.weather_entries
-                      if 'Wind speed' in x.keys()]
-
-        moving_avg_seconds = 120.
-
-        if type(start_time) == str:
-                start_time = date_parser(entries[0]['date'])
-
-        typical_data_interval = (end_time - start_time).total_seconds() / len(entries)
-
-        mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))
-        wind_mavg = movingaverage(wind_speed, mavg_count)
-
-        self.weather_entries['Wind speed'] = max(wind_mavg)
+        self.weather_entries['Wind speed'] = self.wind_speed.value
 
         return super()._get_wind_safety(statuses)
 
-    def _get_gust_safety(self):
+    def _get_gust_safety(self, statuses):
         """Gets wind speed and assigns its maximum value to the wind gust to be
         used in the base method.
         """
         wind_speed = [x['Wind speed']
-                      for x in self.weather_entries
+                      for x in entries
                       if 'Wind speed' in x.keys()]
 
         self.weather_entries['Wind gust'] = max(wind_speed)
