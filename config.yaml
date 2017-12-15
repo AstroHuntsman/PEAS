@@ -13,7 +13,7 @@ environment:
     auto_detect: True
 weather:
     station: mongo
-    web_service:
+    aat_metdata:
       name: 'AAT met data'
       link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
       column_names:  ['time_UTC',

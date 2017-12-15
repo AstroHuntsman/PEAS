@@ -52,7 +52,7 @@ class AATMetData(WeatherAbstract):
     def __init__(self, use_mongo=True):
         # Read configuration
         self.config = load_config()
-        self.web_config = self.config['weather']['web_service']
+        self.web_config = self.config['weather']['aat_metdata']
         self.thresholds = self.web_config['thresholds']
 
         super().__init__(use_mongo=use_mongo)
