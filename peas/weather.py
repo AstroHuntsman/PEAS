@@ -868,7 +868,8 @@ class AAGCloudSensor(object):
 
             typical_data_interval = (end_time - start_time).total_seconds() / len(entries)
 
-            mavg_count = int(np.ceil(120. / typical_data_interval))  # What is this 120?
+            moving_avg_seconds = 120.
+            mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))
             wind_mavg = movingaverage(wind_speed, mavg_count)
 
             # Windy?
