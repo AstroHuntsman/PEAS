@@ -60,7 +60,7 @@ weather:
       max_age: 60.
       thresholds:
         sky-ambient:
-          Clear:       [-.inf, 25.0]
+          Clear:       [-.inf, -25.0]
           Cloudy:      [-25., -15.0]
           Very cloudy: [-15., 0]
         wind_speed:
