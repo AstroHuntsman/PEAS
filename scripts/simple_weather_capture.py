@@ -1,9 +1,4 @@
-# -----------------------------------------------------------------------------
-# This needs to be removed - find a way to do this in command
-import sys
-sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\PEAS")
-sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\POCS")
-# -----------------------------------------------------------------------------
+#!/usr/bin/env python3
 
 import datetime
 import pandas
@@ -91,7 +86,7 @@ def get_plot(filename=None):
 def write_header(filename, name):
     # Write out the header to the CSV file
     with open(filename, 'w') as f:
-        f.write(name) 
+        f.write(name)
 
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """

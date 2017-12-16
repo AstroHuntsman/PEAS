@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import logging
 from pocs.utils.messaging import PanMessaging
