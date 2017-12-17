@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import sys
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\PEAS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\POCS")
+
 import datetime
 import pandas
 import time
@@ -107,7 +111,7 @@ def write_capture_aat(filename=None, data=None):
 
 def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
-    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
+    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\nSky temp. = {}\nAmbient temp. = {}\nRain sensor temp. = {}\nRain frequency = {}\nWind speed = {}\n".format(
         data['weather_sensor_name'],
         data['date'],
         data['safe'],
@@ -115,6 +119,11 @@ def write_capture_aag(filename=None, data=None):
         data['wind_condition'],
         data['sky_condition'],
         data['rain_condition'],
+        data['sky_temp_C'],
+        data['ambient_temp_C'],
+        data['rain_sensor_temp_C'],
+        data['rain_frequency'],
+        data['wind_speed_KPH']
     )
 
     if filename is not None:
@@ -142,8 +151,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Weather objects
-    aat = internet_weather.WeatherData(use_mongo=args.store_mongo)
     aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
+    ### aat = weather_metdata.AATMetData(use_mongo=args.store_mongo)
 
     if args.plotly_stream:
         streams = None
@@ -151,11 +160,12 @@ if __name__ == '__main__':
 
     while True:
         aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        ### aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+
         # Save data to file
         if args.filename is not None:
             write_capture_aag(filename=args.filename, data=aag_data)
-            write_capture_aat(filename=args.filename, data=aat_data)
+            ### write_capture_aat(filename=args.filename, data=aat_data)
 
         # Plot the weather data from the AAG sensor
         if args.plotly_stream:
