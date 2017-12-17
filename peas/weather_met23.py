@@ -54,10 +54,17 @@ class Met23Weather(WeatherDataAbstract):
         return super().capture(use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met23_data(self):
-        response = requests.get("http://www.mso.anu.edu.au/metdata/met23.xml")
+        met23_link = self.met23_cfg.get('link')
+        response = requests.get(met23_link)
+
+
+        with open('met23.xml', 'wb') as file:
+            file.write(response.content)
+
+        file = open('met23.xml', 'r')
 
         with open('met23.xml') as fd:
-            doc = xmltodict.parse(fd.read())
+                doc = xmltodict.parse(fd.read())
 
         met_23_data = {}
 
