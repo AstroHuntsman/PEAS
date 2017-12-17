@@ -84,8 +84,8 @@ weather:
           Dry:         [0]
           Wet:         [1]
     aag_cloud:
-        name: 'AAG CloudWatcher'
-        serial_port: 'COM4'
+        name: 'Local AAG CloudWatcher'
+        serial_port: '/dev/ttyUSB0'
         threshold_cloudy: -25
         threshold_very_cloudy: -15.
         threshold_windy: 50.
