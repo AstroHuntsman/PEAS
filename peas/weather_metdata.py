@@ -78,7 +78,7 @@ class AATMetData(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.metdata_cfg.get('name')
-        data['date'] = dt.utcnow()
+        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.table_data = self.fetch_met_data()
         col_names = self.metdata_cfg.get('column_names')
         for name in col_names:

@@ -634,7 +634,7 @@ class AAGCloudSensor(object):
         data['rain_condition'] = self.safe_dict['Rain']
 
         # Store current weather
-        data['date'] = dt.utcnow()
+        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.weather_entries.append(data)
 
         # If we get over a certain amount of entries, trim the earliest

@@ -11,7 +11,6 @@ from plotly import plotly
 from plotly import tools as plotly_tools
 
 from peas import weather
-from peas import internet_weather
 from peas import weather_metdata
 
 
@@ -93,7 +92,7 @@ def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
         data['weather_data_name'],
-        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
+        data['date'],
         data['safe'],
         data['gust_condition'],
         data['wind_condition'],
@@ -110,7 +109,7 @@ def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
         data['weather_sensor_name'],
-        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
+        data['date'],
         data['safe'],
         data['gust_condition'],
         data['wind_condition'],
