@@ -12,6 +12,7 @@ from plotly import tools as plotly_tools
 
 from peas import weather
 from peas import internet_weather
+from peas import weather_metdata
 
 
 def get_plot(filename=None):
@@ -121,16 +122,6 @@ def write_capture_aag(filename=None, data=None):
         with open(filename, 'a') as f:
             f.write(entry)
 
-def write_final_safe(filename=None, data_1=None, data_2=None):
-    """ A function that reads the final safety result of the weather and can calls itself on a timer """
-    entry = "Final safety decision: {}.\n".format(
-        data_1['safe'] & data_2['safe']
-    )
-
-    if filename is not None:
-        with open(filename, 'a') as f:
-            f.write(entry)
-
 if __name__ == '__main__':
     import argparse
 
@@ -166,7 +157,6 @@ if __name__ == '__main__':
         if args.filename is not None:
             write_capture_aag(filename=args.filename, data=aag_data)
             write_capture_aat(filename=args.filename, data=aat_data)
-            write_final_safe(filename=args.filename, data_1=aag_data, data_2=aat_data)
 
         # Plot the weather data from the AAG sensor
         if args.plotly_stream:

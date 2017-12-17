@@ -11,7 +11,7 @@ from astropy.utils.data import download_file
 from datetime import datetime as dt
 
 from . import load_config
-from .weather_abstract import WeatherAbstract
+from .weather_abstract import WeatherDataAbstract
 from .weather_abstract import get_mongodb
 
 
@@ -34,7 +34,7 @@ class MixedUpTime(TimeISO):
 # -----------------------------------------------------------------------------
 #   AAT metdata Weather Data Class
 # -----------------------------------------------------------------------------
-class AATMetData(WeatherAbstract):
+class AATMetData(WeatherDataAbstract):
     """Downloads the AAT weather met data and checks if the weather conditions
     are safe.
 
@@ -44,7 +44,7 @@ class AATMetData(WeatherAbstract):
     POCS.
 
     Attributes:
-        self.web_config: An dict that contains infromation about the met data.
+        self.metdata_cfg: An dict that contains infromation about the met data.
         self.thresholds: An array of the thresholds for weather entries.
         self.logger: Used to create debugging messages.
         self.max_age: Maximum age of met data that is to be retrieved.
@@ -53,15 +53,15 @@ class AATMetData(WeatherAbstract):
     def __init__(self, use_mongo=True):
         # Read configuration
         self.config = load_config()
-        self.web_config = self.config['weather']['aat_metdata']
-        self.thresholds = self.web_config['thresholds']
+        self.metdata_cfg = self.config['weather']['aat_metdata']
+        self.thresholds = self.metdata_cfg['thresholds']
 
         super().__init__(use_mongo=use_mongo)
 
-        self.logger = logging.getLogger(name=self.web_config.get('name'))
+        self.logger = logging.getLogger(name=self.metdata_cfg.get('name'))
         self.logger.setLevel(logging.INFO)
 
-        self.max_age = TimeDelta(self.web_config.get('max_age', 60.), format='sec')
+        self.max_age = TimeDelta(self.metdata_cfg.get('max_age', 60.), format='sec')
 
         self._safety_methods = {'rain_condition':self._get_rain_safety,
                                 'wetness_condition':self._get_wetness_safety,
@@ -77,10 +77,10 @@ class AATMetData(WeatherAbstract):
 
         data = {}
 
-        data['weather_data_name'] = self.web_config.get('name')
+        data['weather_data_name'] = self.metdata_cfg.get('name')
         data['date'] = dt.utcnow()
         self.table_data = self.fetch_met_data()
-        col_names = self.web_config.get('column_names')
+        col_names = self.metdata_cfg.get('column_names')
         for name in col_names:
             data[name] = self.table_data[name][0]
 
@@ -102,18 +102,16 @@ class AATMetData(WeatherAbstract):
 
         if cache_age > self.max_age:
             # Download met data file
-            """metdata_link = self.web_config.get('link')
+            metdata_link = self.metdata_cfg.get('link')
             metdata_file = download_file(metdata_link)
-            m = open(metdata_file).read()"""
-
-            m = open('C:\\Users\\tiger.JERMAINE\\Downloads\\metdata1.dat').read()
+            m = open(metdata_file).read()
 
             met = m.replace('."\n',' ')
             met = met.replace('" ', '')
 
             # Parse the tab delimited met data into a Table
             t = Table.read(met, format='ascii.no_header', delimiter='\t',
-                                names=self.web_config.get('column_names'))
+                                names=self.metdata_cfg.get('column_names'))
 
             # Convert time strings to Time
             t['time_UTC'] = Time(t['time_UTC'], format='mixed_up_time')
@@ -122,8 +120,8 @@ class AATMetData(WeatherAbstract):
             # Convert from AAT standard time to UTC
             t['time_UTC'] = t['time_UTC'] - 10 * u.hour
 
-            col_names = self.web_config.get('column_names')
-            col_units = self.web_config.get('column_units')
+            col_names = self.metdata_cfg.get('column_names')
+            col_units = self.metdata_cfg.get('column_units')
 
             if len(col_names) != len(col_units):
                 self.logger.debug('Number of columns does not match number of units given')

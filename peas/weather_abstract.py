@@ -208,6 +208,6 @@ class WeatherDataAbstract(object):
                     if current_value > threshold[0] and current_value <= threshold[1]:
                         current_statuses[col_name] = status
                 else:
-                    raise ValueError("Threshold values should be 1 or 2 numbers, got {} for {}!".format(len(threshold), col_name))
+                    raise ValueError("Should only have 1 or 2 threshold entries, got {} for {}!".format(len(threshold), col_name))
 
         return current_statuses
