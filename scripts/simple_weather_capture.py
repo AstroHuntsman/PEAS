@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import sys
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\PEAS")
+sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\POCS")
+
 import datetime
 import pandas
 import time
@@ -11,8 +15,9 @@ from plotly import plotly
 from plotly import tools as plotly_tools
 
 from peas import weather
-from peas import internet_weather
 from peas import weather_metdata
+from peas import weather_met23
+from peas import weather_skymap
 
 
 def get_plot(filename=None):
@@ -89,6 +94,21 @@ def write_header(filename, name):
     with open(filename, 'w') as f:
         f.write(name)
 
+def write_capture_met23(filename=None, data=None):
+    """ A function that reads the AAT met data weather can calls itself on a timer """
+    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
+        data['weather_data_name'],
+        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
+        data['safe'],
+        data['gust_condition'],
+        data['wind_condition'],
+        data['rain_condition']
+    )
+
+    if filename is not None:
+        with open(filename, 'a') as f:
+            f.write(entry)
+
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
@@ -143,20 +163,23 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Weather objects
-    aat = internet_weather.WeatherData(use_mongo=args.store_mongo)
-    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
+    ### aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
+    ### aat = weather_metdata.AATMetData(use_mongo=args.store_mongo)
+    met23 = weather_met23.Met23Weather(use_mongo=args.store_mongo)
 
     if args.plotly_stream:
         streams = None
         streams = get_plot(filename=args.filename)
 
     while True:
-        aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        ### aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        ### aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        met23_data = met23.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         # Save data to file
         if args.filename is not None:
-            write_capture_aag(filename=args.filename, data=aag_data)
-            write_capture_aat(filename=args.filename, data=aat_data)
+            ### write_capture_aag(filename=args.filename, data=aag_data)
+            ### write_capture_aat(filename=args.filename, data=aat_data)
+            write_capture_met23(filename=args.filename, data=met23_data)
 
         # Plot the weather data from the AAG sensor
         if args.plotly_stream:
