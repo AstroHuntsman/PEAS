@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# This is only to help me run the code on Jermaine's laptop
 import sys
 sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\PEAS")
 sys.path.append("C:\\Users\\tiger.JERMAINE\\Documents\\HWM\\POCS")
@@ -183,7 +184,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Weather objects
-    ### aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
+    aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
     aat = weather_metdata.AATMetData(use_mongo=args.store_mongo)
     met23 = weather_met23.Met23Weather(use_mongo=args.store_mongo)
     skymap = weather_skymap.SkyMapWeather(use_mongo=args.store_mongo)
@@ -193,7 +194,7 @@ if __name__ == '__main__':
         streams = get_plot(filename=args.filename)
 
     while True:
-        ### aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         skymap_data = skymap.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         met23_data = met23.capture(use_mongo=args.store_mongo, send_message=args.send_message)
@@ -201,7 +202,7 @@ if __name__ == '__main__':
         # Save data to file
         if args.filename is not None:
             write_datetime(filename=args.filename)
-            ### write_capture_aag(filename=args.filename, data=aag_data)
+            write_capture_aag(filename=args.filename, data=aag_data)
             write_capture_aat(filename=args.filename, data=aat_data)
             write_capture_skymap(filename=args.filename, data=skymap_data)
             write_capture_met23(filename=args.filename, data=met23_data)
