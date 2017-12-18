@@ -96,7 +96,7 @@ def write_header(filename, name):
 
 def write_datetime(filename=None):
     """ A function that writes the date and time on a file """
-    entry = "Weather information ({}).\n".format(dt.utcnow().strftime('%d-%m-%Y %H:%M:%S'))
+    entry = "\nWeather Information ({})\n".format(dt.utcnow().strftime('%d-%m-%Y %H:%M:%S'))
 
     if filename is not None:
         with open(filename, 'a') as f:
