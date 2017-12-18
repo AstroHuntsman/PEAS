@@ -43,7 +43,7 @@ class Met23Weather(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.met23_cfg.get('name')
-        data['date'] = Time.now()
+        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.table_data = self.fetch_met23_data()
         col_names = self.met23_cfg.get('column_names')
         for name in col_names:
@@ -55,8 +55,8 @@ class Met23Weather(WeatherDataAbstract):
 
     def fetch_met23_data(self):
         try:
-            cache_age = Time.now() - self.weather_entries['date']
-        except KeyError:
+            cache_age = Time.now() - self.time
+        except AttributeError:
             cache_age = 61. * u.second
 
         if cache_age > self.max_age:
@@ -77,6 +77,8 @@ class Met23Weather(WeatherDataAbstract):
             met_23_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
             met_23_data['wind_gust'] = float(doc['metsys']['data']['wgust']['val']) # m / s
             met_23_data['rain_sensor'] = doc['metsys']['data']['rsens']['val']
+
+            self.time = Time.now()
 
         return(met_23_data)
 

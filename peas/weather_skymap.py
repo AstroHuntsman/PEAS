@@ -44,7 +44,7 @@ class SkyMapWeather(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.skymap_cfg.get('name')
-        data['date'] = Time.now()
+        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.table_data = self.fetch_skymap_data()
         col_names = self.skymap_cfg.get('column_names')
         for name in col_names:
@@ -56,8 +56,8 @@ class SkyMapWeather(WeatherDataAbstract):
 
     def fetch_skymap_data(self):
         try:
-            cache_age = Time.now() - self.weather_entries['date']
-        except KeyError:
+            cache_age = Time.now() - self.time
+        except AttributeError:
             cache_age = 61. * u.second
 
         if cache_age > self.max_age:
@@ -78,6 +78,8 @@ class SkyMapWeather(WeatherDataAbstract):
             skymap_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
             skymap_data['wind_gust'] = float(doc['metsys']['data']['wsx']['val']) # m / s
             skymap_data['sky-ambient'] = float(doc['metsys']['data']['skyt']['val']) # Celsius
+
+            self.time = Time.now()
 
         return(skymap_data)
 
