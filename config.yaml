@@ -127,8 +127,12 @@ weather:
           Cloudy:      [-25., -15.0]
           Very cloudy: [-15., 0]
     aag_cloud:
+<<<<<<< get_met23_and_skymap
         name: 'Local AAG CloudWatcher'
         serial_port: 'COM4'
+=======
+        serial_port: 'COM5'
+>>>>>>> emergency-weather-monitor
         threshold_cloudy: -25
         threshold_very_cloudy: -15.
         threshold_windy: 50.

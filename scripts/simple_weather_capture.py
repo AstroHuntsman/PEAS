@@ -149,7 +149,7 @@ def write_capture_aat(filename=None, data=None):
 
 def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
-    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
+    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\nSky temp. = {}\nAmbient temp. = {}\nRain sensor temp. = {}\nRain frequency = {}\nWind speed = {}\n".format(
         data['weather_sensor_name'],
         data['safe'],
         data['gust_condition'],
@@ -197,6 +197,7 @@ if __name__ == '__main__':
         aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         skymap_data = skymap.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         met23_data = met23.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        
         # Save data to file
         if args.filename is not None:
             write_datetime(filename=args.filename)
