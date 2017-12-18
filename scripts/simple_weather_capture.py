@@ -94,15 +94,37 @@ def write_header(filename, name):
     with open(filename, 'w') as f:
         f.write(name)
 
-def write_capture_met23(filename=None, data=None):
+def write_datetime(filename=None):
+    """ A function that writes the date and time on a file """
+    entry = "Weather information ({}).\n".format(dt.utcnow().strftime('%d-%m-%Y %H:%M:%S'))
+
+    if filename is not None:
+        with open(filename, 'a') as f:
+            f.write(entry)
+
+def write_capture_skymap(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
-    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
+    entry = "{}: Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
         data['weather_data_name'],
-        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
         data['safe'],
         data['gust_condition'],
         data['wind_condition'],
-        data['rain_condition']
+        data['sky_condition'],
+        data['rain_condition'],
+    )
+
+    if filename is not None:
+        with open(filename, 'a') as f:
+            f.write(entry)
+
+def write_capture_met23(filename=None, data=None):
+    """ A function that reads the AAT met data weather can calls itself on a timer """
+    entry = "{}: Safe={}; Gust={}, Wind={}, Rain={}.\n".format(
+        data['weather_data_name'],
+        data['safe'],
+        data['gust_condition'],
+        data['wind_condition'],
+        data['rain_condition'],
     )
 
     if filename is not None:
@@ -111,9 +133,8 @@ def write_capture_met23(filename=None, data=None):
 
 def write_capture_aat(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
-    entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
+    entry = "{}: Safe={}; Gust={}, Wind={}, Sky={}, Rain={}, Wetness={}.\n".format(
         data['weather_data_name'],
-        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
         data['safe'],
         data['gust_condition'],
         data['wind_condition'],
@@ -130,12 +151,11 @@ def write_capture_aag(filename=None, data=None):
     """ A function that reads the AAG CloudWatcher weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
         data['weather_sensor_name'],
-        data['date'].strftime('%d-%m-%Y %H:%M:%S'),
         data['safe'],
         data['gust_condition'],
         data['wind_condition'],
         data['sky_condition'],
-        data['rain_condition'],
+        data['rain_condition']
     )
 
     if filename is not None:
@@ -151,7 +171,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--loop', action='store_true', default=True,
                         help="If should keep reading, defaults to True")
-    parser.add_argument("-d", "--delay", dest="delay", default=0.0, type=float,
+    parser.add_argument("-d", "--delay", dest="delay", default=60.0, type=float,
                         help="Interval to read weather")
     parser.add_argument("-f", "--filename", dest="filename", default=None,
                         help="Where to save results")
@@ -164,8 +184,9 @@ if __name__ == '__main__':
 
     # Weather objects
     ### aag = weather.AAGCloudSensor(serial_address=args.serial_port, use_mongo=args.store_mongo)
-    ### aat = weather_metdata.AATMetData(use_mongo=args.store_mongo)
+    aat = weather_metdata.AATMetData(use_mongo=args.store_mongo)
     met23 = weather_met23.Met23Weather(use_mongo=args.store_mongo)
+    skymap = weather_skymap.SkyMapWeather(use_mongo=args.store_mongo)
 
     if args.plotly_stream:
         streams = None
@@ -173,12 +194,15 @@ if __name__ == '__main__':
 
     while True:
         ### aag_data = aag.capture(use_mongo=args.store_mongo, send_message=args.send_message)
-        ### aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        aat_data = aat.capture(use_mongo=args.store_mongo, send_message=args.send_message)
+        skymap_data = skymap.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         met23_data = met23.capture(use_mongo=args.store_mongo, send_message=args.send_message)
         # Save data to file
         if args.filename is not None:
+            write_datetime(filename=args.filename)
             ### write_capture_aag(filename=args.filename, data=aag_data)
-            ### write_capture_aat(filename=args.filename, data=aat_data)
+            write_capture_aat(filename=args.filename, data=aat_data)
+            write_capture_skymap(filename=args.filename, data=skymap_data)
             write_capture_met23(filename=args.filename, data=met23_data)
 
         # Plot the weather data from the AAG sensor

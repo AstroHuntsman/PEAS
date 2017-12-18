@@ -6,7 +6,7 @@ import requests
 import xmltodict
 
 import astropy.units as u
-from astropy.time import TimeDelta
+from astropy.time import Time, TimeDelta
 
 from datetime import datetime as dt
 
@@ -43,7 +43,7 @@ class Met23Weather(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.met23_cfg.get('name')
-        data['date'] = dt.utcnow()
+        data['date'] = Time.now()
         self.table_data = self.fetch_met23_data()
         col_names = self.met23_cfg.get('column_names')
         for name in col_names:
@@ -54,40 +54,29 @@ class Met23Weather(WeatherDataAbstract):
         return super().capture(use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met23_data(self):
-        met23_link = self.met23_cfg.get('link')
-        response = requests.get(met23_link)
+        try:
+            cache_age = Time.now() - self.weather_entries['date']
+        except KeyError:
+            cache_age = 61. * u.second
+
+        if cache_age > self.max_age:
+            met23_link = self.met23_cfg.get('link')
+            response = requests.get(met23_link)
 
 
-        with open('met23.xml', 'wb') as file:
-            file.write(response.content)
+            with open('met23.xml', 'wb') as file:
+                file.write(response.content)
 
-        file = open('met23.xml', 'r')
+            file = open('met23.xml', 'r')
 
-        with open('met23.xml') as fd:
-                doc = xmltodict.parse(fd.read())
+            with open('met23.xml') as fd:
+                    doc = xmltodict.parse(fd.read())
 
-        met_23_data = {}
+            met_23_data = {}
 
-        met_23_data['date'] = doc['metsys']['date'] + ' ' + doc['metsys']['utc']
-        met_23_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
-        met_23_data['wind_gust'] = float(doc['metsys']['data']['wgust']['val']) # m / s
-        met_23_data['wind_direction'] = float(doc['metsys']['data']['wd']['val']) # degree
-        met_23_data['wind_wrt_telescope'] = float(doc['metsys']['data']['wtt']['val']) # degree
-        met_23_data['dry-bulb_temperature'] = float(doc['metsys']['data']['tdb']['val']) # Celsius
-        met_23_data['dewpoint'] = float(doc['metsys']['data']['dp']['val']) # Celsius
-        met_23_data['relative_humidity'] = float(doc['metsys']['data']['rh']['val']) # percent
-        met_23_data['barometric_pressure'] = float(doc['metsys']['data']['qfe']['val']) # hPa
-        met_23_data['sea-level_pressure'] = float(doc['metsys']['data']['qnh']['val']) # hPa
-
-        # turns the rain sensor value from the string format to number
-        get_rain = {}
-        get_rain['rain_sensor'] = doc['metsys']['data']['rsens']['val']
-        if get_rain['rain_sensor'] == 'RAINING':
-            met_23_data['rain_sensor'] = 1
-        elif get_rain['rain_sensor'] == 'NOT_RAINING':
-            met_23_data['rain_sensor'] = 0
-        else:
-            met_23_data['rain_sensor'] = -1
+            met_23_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
+            met_23_data['wind_gust'] = float(doc['metsys']['data']['wgust']['val']) # m / s
+            met_23_data['rain_sensor'] = doc['metsys']['data']['rsens']['val']
 
         return(met_23_data)
 
@@ -105,9 +94,7 @@ class Met23Weather(WeatherDataAbstract):
 
         rain_condition = statuses['rain_sensor']
 
-        if rain_condition == 'No data':
-            rain_safe = False
-        elif rain_condition == 'No rain':
+        if rain_condition == 'No rain':
             rain_safe = True
         elif rain_condition == 'Rain':
             rain_safe = False
