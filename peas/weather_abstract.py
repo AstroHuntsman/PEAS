@@ -191,7 +191,7 @@ class WeatherDataAbstract(object):
         Returns:
             A dictionary of the current statuses.For example:
 
-                {'sky-ambient': 'Clear', 'wind_speed': 'Very windy', ... , etc. }
+                {'sky-ambient': 'Clear', 'wind_speed': 'Very windy', ... , etc.}
         """
         current_statuses = {}
 

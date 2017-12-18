@@ -92,7 +92,7 @@ class Met23Weather(WeatherDataAbstract):
 
             met_23_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
             met_23_data['wind_gust'] = float(doc['metsys']['data']['wgust']['val']) # m / s
-            met_23_data['rain_sensor'] = doc['metsys']['data']['rsens']['val']
+            met_23_data['rain_sensor'] = str(doc['metsys']['data']['rsens']['val'])
 
             self.time = Time.now()
 

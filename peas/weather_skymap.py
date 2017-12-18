@@ -90,7 +90,7 @@ class SkyMapWeather(WeatherDataAbstract):
 
             skymap_data = {}
 
-            skymap_data['rain_sensor'] = doc['metsys']['data']['ers']['val']
+            skymap_data['rain_sensor'] = int(doc['metsys']['data']['ers']['val'])
             skymap_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
             skymap_data['wind_gust'] = float(doc['metsys']['data']['wsx']['val']) # m / s
             skymap_data['sky-ambient'] = float(doc['metsys']['data']['skyt']['val']) # Celsius

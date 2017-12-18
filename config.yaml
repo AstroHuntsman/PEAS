@@ -86,15 +86,15 @@ weather:
     met23:
       name: '2.3 m met data'
       link: 'http://www.mso.anu.edu.au/metdata/met23.xml'
-      column_names: ['wind_speed',
-                     'wind_gust',
-                     'rain_sensor']
+      column_names: ['rain_sensor',
+                     'wind_speed',
+                     'wind_gust']
       max_age: 60.
       thresholds:
         rain_sensor:
           No rain:     ['NOT_RAINING']
           Rain:        ['RAINING']
-        wind_speed:    # in m /s
+        wind_speed:    # in m / s
           Calm:        [0.0, 14.0]
           Windy:       [14.0, 21.0]
           Very Windy:  [21.0, .inf]
