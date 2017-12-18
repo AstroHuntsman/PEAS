@@ -15,7 +15,21 @@ from .weather_abstract import WeatherDataAbstract
 from .weather_abstract import get_mongodb
 
 class Met23Weather(WeatherDataAbstract):
-    """ Gets the weather information from the 2.3 m telescope """
+    """ Gets the weather information from the 2.3 m telescope and checks if the
+    weather conditions are safe.
+
+    Met data from the 2.3 m is parsed into a dictionary from its original xml
+    file, entries that were taken from the file are checked with customizable
+    parameters to decide its condition and its safety.
+    Information of the met data is then able to be stored in mongodb and sent to
+    POCS.
+
+    Attributes:
+        self.met23_cfg: An dict that contains infromation about the met data.
+        self.thresholds: An array of the thresholds for weather entries.
+        self.logger: Used to create debugging messages.
+        self.max_age: Maximum age of met data that is to be retrieved.
+    """
 
     def __init__(self, use_mongo=True):
         # Read configuration
@@ -54,6 +68,8 @@ class Met23Weather(WeatherDataAbstract):
         return super().capture(use_mongo=False, send_message=False, **kwargs)
 
     def fetch_met23_data(self):
+        """ get the weather data from the 2.3 m and then parse the entries
+        that are wanted into a ditionary """
         try:
             cache_age = Time.now() - self.time
         except AttributeError:
