@@ -63,11 +63,11 @@ weather:
           Clear:       [-.inf, -25.0]
           Cloudy:      [-25., -15.0]
           Very cloudy: [-15., 0]
-        wind_speed:
+        wind_speed:    # in km / h
           Calm:        [0.0, 50.0]
           Windy:       [50.0, 75.0]
           Very Windy:  [75.0, .inf]
-        wind_gust:
+        wind_gust:     # in km / h
           Calm:        [0.0, 100.0]
           Gusty:       [100.0, 125.0]
           Very gusty:  [125.0, .inf]
@@ -83,7 +83,51 @@ weather:
           No data:     [-1]
           Dry:         [0]
           Wet:         [1]
+    met23:
+      name: '2.3 m met data'
+      link: 'http://www.mso.anu.edu.au/metdata/met23.xml'
+      column_names: ['wind_speed',
+                     'wind_gust',
+                     'rain_sensor']
+      max_age: 60.
+      thresholds:
+        rain_sensor:
+          No rain:     ['NOT_RAINING']
+          Rain:        ['RAINING']
+        wind_speed:    # in m /s
+          Calm:        [0.0, 14.0]
+          Windy:       [14.0, 21.0]
+          Very Windy:  [21.0, .inf]
+        wind_gust:     # in m / s
+          Calm:        [0.0, 28.0]
+          Gusty:       [28.0, 35.0]
+          Very gusty:  [35.0, .inf]
+    skymap:
+      name: 'SkyMapper met data'
+      link: 'http://www.mso.anu.edu.au/metdata/skymap.xml'
+      column_names: ['rain_sensor',
+                     'wind_speed',
+                     'wind_gust',
+                     'sky-ambient']
+      max_age: 60.
+      thresholds:
+        rain_sensor:
+          No rain:     [0]
+          Rain:        [1]
+        wind_speed:    # in m /s
+          Calm:        [0.0, 14.0]
+          Windy:       [14.0, 21.0]
+          Very Windy:  [21.0, .inf]
+        wind_gust:     # in m / s
+          Calm:        [0.0, 28.0]
+          Gusty:       [28.0, 35.0]
+          Very gusty:  [35.0, .inf]
+        sky-ambient:
+          Clear:       [-.inf, -25.0]
+          Cloudy:      [-25., -15.0]
+          Very cloudy: [-15., 0]
     aag_cloud:
+        name: 'Local AAG CloudWatcher'
         serial_port: 'COM5'
         threshold_cloudy: -25
         threshold_very_cloudy: -15.
