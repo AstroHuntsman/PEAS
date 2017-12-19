@@ -6,6 +6,7 @@ import requests
 import xmltodict
 
 import astropy.units as u
+from astropy.table import Table
 from astropy.time import Time, TimeDelta
 
 from datetime import datetime as dt
@@ -62,7 +63,7 @@ class SkyMapWeather(WeatherDataAbstract):
         self.table_data = self.fetch_skymap_data()
         col_names = self.skymap_cfg.get('column_names')
         for name in col_names:
-            data[name] = self.table_data[name]
+            data[name] = self.table_data[name][0]
 
         self.weather_entries = data
 
@@ -70,7 +71,12 @@ class SkyMapWeather(WeatherDataAbstract):
 
     def fetch_skymap_data(self):
         """ get the weather data from SkyMapper and then parse the entries
-        that are wanted into a ditionary """
+        that are wanted into a table
+
+        Returns:
+            Table of the SkyMapper met data including the entries corresponding
+            units.
+        """
         try:
             cache_age = Time.now() - self.time
         except AttributeError:
@@ -88,12 +94,23 @@ class SkyMapWeather(WeatherDataAbstract):
             with open('skymap.xml') as fd:
                     doc = xmltodict.parse(fd.read())
 
-            skymap_data = {}
+            data_rows = [(float(doc['metsys']['data']['ws']['val']),
+                         float(doc['metsys']['data']['wsx']['val']),
+                         float(doc['metsys']['data']['skyt']['val']),
+                         int(doc['metsys']['data']['irs']['val']) # 0=No rain | 1=Rain
+                         )]
 
-            skymap_data['rain_sensor'] = int(doc['metsys']['data']['ers']['val'])
-            skymap_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
-            skymap_data['wind_gust'] = float(doc['metsys']['data']['wsx']['val']) # m / s
-            skymap_data['sky-ambient'] = float(doc['metsys']['data']['skyt']['val']) # Celsius
+            col_names = self.skymap_cfg.get('column_names')
+            col_units = self.skymap_cfg.get('column_units')
+
+            skymap_data = Table(rows=data_rows, names=col_names)
+
+            if len(col_names) != len(col_units):
+                self.logger.debug('Number of columns does not match number of units given')
+
+            # Set units for items that have them
+            for name, unit in zip(col_names, col_units):
+                skymap_data[name].unit = unit
 
             self.time = Time.now()
 
@@ -113,12 +130,12 @@ class SkyMapWeather(WeatherDataAbstract):
 
         rain_condition = statuses['rain_sensor']
 
-        if rain_condition == 'No rain':
-            rain_safe = True
-        elif rain_condition == 'Rain':
+        if rain_condition == 'Rain':
             rain_safe = False
         elif rain_condition == 'Invalid':
             rain_safe = False
+        elif rain_condition == 'No rain':
+            rain_safe = True
         else:
             rain_condition = 'Unknown'
             rain_safe = False

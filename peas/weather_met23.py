@@ -6,6 +6,7 @@ import requests
 import xmltodict
 
 import astropy.units as u
+from astropy.table import Table
 from astropy.time import Time, TimeDelta
 
 from datetime import datetime as dt
@@ -61,7 +62,7 @@ class Met23Weather(WeatherDataAbstract):
         self.table_data = self.fetch_met23_data()
         col_names = self.met23_cfg.get('column_names')
         for name in col_names:
-            data[name] = self.table_data[name]
+            data[name] = self.table_data[name][0]
 
         self.weather_entries = data
 
@@ -69,7 +70,11 @@ class Met23Weather(WeatherDataAbstract):
 
     def fetch_met23_data(self):
         """ get the weather data from the 2.3 m and then parse the entries
-        that are wanted into a ditionary """
+        that are wanted into a table.
+
+        Returns:
+            Table of the 2.3m met data including the entries corresponding units.
+        """
         try:
             cache_age = Time.now() - self.time
         except AttributeError:
@@ -88,15 +93,36 @@ class Met23Weather(WeatherDataAbstract):
             with open('met23.xml') as fd:
                     doc = xmltodict.parse(fd.read())
 
-            met_23_data = {}
+            # turns the string of the rain condition into an integer number
+            rain_stat = str(doc['metsys']['data']['rsens']['val'])
+            if rain_stat == 'RAINING':
+                rain_val = 1
+            elif rain_stat == 'NOT_RAINING':
+                rain_val = 0
+            else:
+                rain_val = -1
 
-            met_23_data['wind_speed'] = float(doc['metsys']['data']['ws']['val']) # m / s
-            met_23_data['wind_gust'] = float(doc['metsys']['data']['wgust']['val']) # m / s
-            met_23_data['rain_sensor'] = str(doc['metsys']['data']['rsens']['val'])
+            # this can eventually be expanded to all information in the file and then put into config file
+            data_rows = [(float(doc['metsys']['data']['ws']['val']),
+                          float(doc['metsys']['data']['wgust']['val']),
+                          rain_val
+                          )]
+
+            col_names = self.met23_cfg.get('column_names')
+            col_units = self.met23_cfg.get('column_units')
+
+            met23_data = Table(rows=data_rows, names=col_names)
+
+            if len(col_names) != len(col_units):
+                self.logger.debug('Number of columns does not match number of units given')
+
+            # Set units for items that have them
+            for name, unit in zip(col_names, col_units):
+                met23_data[name].unit = unit
 
             self.time = Time.now()
 
-        return(met_23_data)
+        return(met23_data)
 
     def _get_rain_safety(self, statuses):
         """Gets the rain safety and weather conditions
@@ -112,12 +138,14 @@ class Met23Weather(WeatherDataAbstract):
 
         rain_condition = statuses['rain_sensor']
 
-        if rain_condition == 'No rain':
-            rain_safe = True
+        if rain_condition == 'No data':
+            rain_safe = False
         elif rain_condition == 'Rain':
             rain_safe = False
         elif rain_condition == 'Invalid':
             rain_safe = False
+        elif rain_condition == 'No rain':
+            rain_safe = True
         else:
             rain_condition = 'Unknown'
             rain_safe = False

@@ -86,14 +86,18 @@ weather:
     met23:
       name: '2.3 m met data'
       link: 'http://www.mso.anu.edu.au/metdata/met23.xml'
-      column_names: ['rain_sensor',
-                     'wind_speed',
-                     'wind_gust']
+      column_names: ['wind_speed',
+                     'wind_gust',
+                     'rain_sensor']
+      column_units: [u.m / u.second,
+                     u.m / u.second,
+                     u.dimensionless_unscaled]
       max_age: 60.
       thresholds:
         rain_sensor:
-          No rain:     ['NOT_RAINING']
-          Rain:        ['RAINING']
+          No data:     [-1]
+          No rain:     [0]
+          Rain:        [1]
         wind_speed:    # in m / s
           Calm:        [0.0, 14.0]
           Windy:       [14.0, 21.0]
@@ -105,10 +109,14 @@ weather:
     skymap:
       name: 'SkyMapper met data'
       link: 'http://www.mso.anu.edu.au/metdata/skymap.xml'
-      column_names: ['rain_sensor',
-                     'wind_speed',
+      column_names: ['wind_speed',
                      'wind_gust',
-                     'sky-ambient']
+                     'sky-ambient',
+                     'rain_sensor',]
+      column_units: [u.m / u.second,
+                     u.m / u.second,
+                     u.dimensionless_unscaled,
+                     u.Celsius]
       max_age: 60.
       thresholds:
         rain_sensor:
