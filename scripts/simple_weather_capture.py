@@ -90,11 +90,6 @@ def get_plot(filename=None):
 
     return streams
 
-def write_header(filename, name):
-    # Write out the header to the CSV file
-    with open(filename, 'w') as f:
-        f.write(name)
-
 def write_capture_skymap(filename=None, data=None):
     """ A function that reads the AAT met data weather can calls itself on a timer """
     entry = "{} ({}): Safe={}; Gust={}, Wind={}, Sky={}, Rain={}.\n".format(
@@ -198,7 +193,6 @@ if __name__ == '__main__':
         # Save data to file
         if args.filename is not None:
             write_capture_aag(filename=args.filename, data=aag_data)
-            write_header(filename=args.filename, name='\n')
             write_capture_aat(filename=args.filename, data=aat_data)
             write_capture_skymap(filename=args.filename, data=skymap_data)
             write_capture_met23(filename=args.filename, data=met23_data)
