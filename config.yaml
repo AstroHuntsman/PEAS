@@ -159,7 +159,7 @@ weather:
                      u.Celsius]
       max_age: 60.
       thresholds:
-        rain_sensor:
+        int_rain_sensor:
           No rain:     [0]
           Rain:        [1]
         wind_speed:    # in m /s

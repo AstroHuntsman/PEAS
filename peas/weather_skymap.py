@@ -142,7 +142,7 @@ class SkyMapWeather(WeatherDataAbstract):
                 'No data', False
         """
 
-        rain_condition = statuses['rain_sensor']
+        rain_condition = statuses['int_rain_sensor']
 
         if rain_condition == 'Rain':
             rain_safe = False
