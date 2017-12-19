@@ -88,9 +88,23 @@ weather:
       link: 'http://www.mso.anu.edu.au/metdata/met23.xml'
       column_names: ['wind_speed',
                      'wind_gust',
+                     'wind_direction',
+                     'wind_wrt_telescope',
+                     'dry-bulb_temp',
+                     'dewpoint',
+                     'rel_humidity',
+                     'barometric_pressure',
+                     'sea-level_pressure',
                      'rain_sensor']
       column_units: [u.m / u.second,
                      u.m / u.second,
+                     u.degree,
+                     u.degree,
+                     u.Celsius,
+                     u.Celsius,
+                     u.percent,
+                     u.hPa,
+                     u.hPa,
                      u.dimensionless_unscaled]
       max_age: 60.
       thresholds:
@@ -109,13 +123,39 @@ weather:
     skymap:
       name: 'SkyMapper met data'
       link: 'http://www.mso.anu.edu.au/metdata/skymap.xml'
-      column_names: ['wind_speed',
+      column_names: ['int_rain_sensor',
+                     'ext_rain_sensor',
+                     'wind_speed',
                      'wind_gust',
-                     'sky-ambient',
-                     'rain_sensor',]
-      column_units: [u.m / u.second,
-                     u.m / u.second,
+                     'wind_direction',
+                     'external_temp',
+                     'dewpoint',
+                     'rel_humidity',
+                     'barometric_pressure',
+                     'internal_temp',
+                     'rain_intensity',
+                     'rain_duration',
+                     'rain_accumulation',
+                     'hail_intensity',
+                     'hail_accumulation',
+                     'hail_duration',
+                     'sky-ambient']
+      column_units: [u.dimensionless_unscaled,
                      u.dimensionless_unscaled,
+                     u.m / u.second,
+                     u.m / u.second,
+                     u.degree,
+                     u.Celsius,
+                     u.Celsius,
+                     u.percent,
+                     u.hPa,
+                     u.Celsius,
+                     u.mm / u.h,
+                     u.second,
+                     u.mm,
+                     u.dimensionless_unscaled / (u.cm * u.cm * u.h),
+                     u.dimensionless_unscaled / (u.cm * u.cm),
+                     u.second,
                      u.Celsius]
       max_age: 60.
       thresholds:

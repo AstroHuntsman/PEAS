@@ -84,7 +84,6 @@ class Met23Weather(WeatherDataAbstract):
             met23_link = self.met23_cfg.get('link')
             response = requests.get(met23_link)
 
-
             with open('met23.xml', 'wb') as file:
                 file.write(response.content)
 
@@ -95,6 +94,7 @@ class Met23Weather(WeatherDataAbstract):
 
             # turns the string of the rain condition into an integer number
             rain_stat = str(doc['metsys']['data']['rsens']['val'])
+
             if rain_stat == 'RAINING':
                 rain_val = 1
             elif rain_stat == 'NOT_RAINING':
@@ -102,27 +102,34 @@ class Met23Weather(WeatherDataAbstract):
             else:
                 rain_val = -1
 
-            # this can eventually be expanded to all information in the file and then put into config file
+            # gets data from the xml file.
             data_rows = [(float(doc['metsys']['data']['ws']['val']),
                           float(doc['metsys']['data']['wgust']['val']),
+                          float(doc['metsys']['data']['wd']['val']),
+                          float(doc['metsys']['data']['wtt']['val']),
+                          float(doc['metsys']['data']['tdb']['val']),
+                          float(doc['metsys']['data']['dp']['val']),
+                          float(doc['metsys']['data']['rh']['val']),
+                          float(doc['metsys']['data']['qfe']['val']),
+                          float(doc['metsys']['data']['qnh']['val']),
                           rain_val
                           )]
 
             col_names = self.met23_cfg.get('column_names')
             col_units = self.met23_cfg.get('column_units')
 
-            met23_data = Table(rows=data_rows, names=col_names)
+            met23_table = Table(rows=data_rows, names=col_names)
 
             if len(col_names) != len(col_units):
                 self.logger.debug('Number of columns does not match number of units given')
 
             # Set units for items that have them
             for name, unit in zip(col_names, col_units):
-                met23_data[name].unit = unit
+                met23_table[name].unit = unit
 
             self.time = Time.now()
 
-        return(met23_data)
+        return(met23_table)
 
     def _get_rain_safety(self, statuses):
         """Gets the rain safety and weather conditions

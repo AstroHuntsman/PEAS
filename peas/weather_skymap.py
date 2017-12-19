@@ -94,27 +94,41 @@ class SkyMapWeather(WeatherDataAbstract):
             with open('skymap.xml') as fd:
                     doc = xmltodict.parse(fd.read())
 
-            data_rows = [(float(doc['metsys']['data']['ws']['val']),
-                         float(doc['metsys']['data']['wsx']['val']),
-                         float(doc['metsys']['data']['skyt']['val']),
-                         int(doc['metsys']['data']['irs']['val']) # 0=No rain | 1=Rain
+            # gets the values of the data from the xml file
+            data_rows = [(int(doc['metsys']['data']['irs']['val']),
+                          int(doc['metsys']['data']['ers']['val']),
+                          float(doc['metsys']['data']['ws']['val']),
+                          float(doc['metsys']['data']['wsx']['val']),
+                          float(doc['metsys']['data']['wd']['val']),
+                          float(doc['metsys']['data']['tdb']['val']),
+                          float(doc['metsys']['data']['dp']['val']),
+                          float(doc['metsys']['data']['rh']['val']),
+                          float(doc['metsys']['data']['qfe']['val']),
+                          float(doc['metsys']['data']['it']['val']),
+                          float(doc['metsys']['data']['rain']['val']),
+                          float(doc['metsys']['data']['rdur']['val']),
+                          float(doc['metsys']['data']['racc']['val']),
+                          float(doc['metsys']['data']['hail']['val']),
+                          float(doc['metsys']['data']['hacc']['val']),
+                          float(doc['metsys']['data']['hdur']['val']),
+                          float(doc['metsys']['data']['skyt']['val']),
                          )]
 
             col_names = self.skymap_cfg.get('column_names')
             col_units = self.skymap_cfg.get('column_units')
 
-            skymap_data = Table(rows=data_rows, names=col_names)
+            skymap_table = Table(rows=data_rows, names=col_names)
 
             if len(col_names) != len(col_units):
                 self.logger.debug('Number of columns does not match number of units given')
 
             # Set units for items that have them
             for name, unit in zip(col_names, col_units):
-                skymap_data[name].unit = unit
+                skymap_table[name].unit = unit
 
             self.time = Time.now()
 
-        return(skymap_data)
+        return(skymap_table)
 
     def _get_rain_safety(self, statuses):
         """Gets the rain safety and weather conditions
