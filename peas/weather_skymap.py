@@ -88,8 +88,6 @@ class SkyMapWeather(WeatherDataAbstract):
             with open('skymap.xml', 'wb') as file:
                 file.write(response.content)
 
-            file = open('skymap.xml', 'r')
-
             with open('skymap.xml') as fd:
                     doc = xmltodict.parse(fd.read())
 

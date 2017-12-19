@@ -86,8 +86,6 @@ class Met23Weather(WeatherDataAbstract):
             with open('met23.xml', 'wb') as file:
                 file.write(response.content)
 
-            file = open('met23.xml', 'r')
-
             with open('met23.xml') as fd:
                     doc = xmltodict.parse(fd.read())
 
