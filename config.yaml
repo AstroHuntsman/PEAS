@@ -14,7 +14,7 @@ environment:
 weather:
     station: mongo
     aat_metdata:
-      name: 'AAT met data'
+      name: 'AAT metdata'
       link: 'ftp://site-ftp.aao.gov.au/pub/local/metdata/metdata1.dat'
       column_names:  ['time_UTC',
                       'outside_air_temperature',
@@ -84,9 +84,10 @@ weather:
           Dry:         [0]
           Wet:         [1]
     met23:
-      name: '2.3 m met data'
+      name: '2.3 m metdata'
       link: 'http://www.mso.anu.edu.au/metdata/met23.xml'
-      column_names: ['wind_speed',
+      column_names: ['date',
+                     'wind_speed',
                      'wind_gust',
                      'wind_direction',
                      'wind_wrt_telescope',
@@ -96,7 +97,8 @@ weather:
                      'barometric_pressure',
                      'sea-level_pressure',
                      'rain_sensor']
-      column_units: [u.m / u.second,
+      column_units: [u.dimensionless_unscaled,
+                     u.m / u.second,
                      u.m / u.second,
                      u.degree,
                      u.degree,
@@ -106,7 +108,7 @@ weather:
                      u.hPa,
                      u.hPa,
                      u.dimensionless_unscaled]
-      max_age: 60.
+      max_age: 360.
       thresholds:
         rain_sensor:
           No data:     [-1]
@@ -121,9 +123,10 @@ weather:
           Gusty:       [28.0, 35.0]
           Very gusty:  [35.0, .inf]
     skymap:
-      name: 'SkyMapper met data'
+      name: 'SkyMapper metdata'
       link: 'http://www.mso.anu.edu.au/metdata/skymap.xml'
-      column_names: ['int_rain_sensor',
+      column_names: ['date',
+                     'int_rain_sensor',
                      'ext_rain_sensor',
                      'wind_speed',
                      'wind_gust',
@@ -142,6 +145,7 @@ weather:
                      'sky-ambient']
       column_units: [u.dimensionless_unscaled,
                      u.dimensionless_unscaled,
+                     u.dimensionless_unscaled,
                      u.m / u.second,
                      u.m / u.second,
                      u.degree,
@@ -157,7 +161,7 @@ weather:
                      u.dimensionless_unscaled / (u.cm * u.cm),
                      u.second,
                      u.Celsius]
-      max_age: 60.
+      max_age: 360.
       thresholds:
         int_rain_sensor:
           No rain:     [0]

@@ -43,7 +43,7 @@ class SkyMapWeather(WeatherDataAbstract):
         self.logger = logging.getLogger(name=self.skymap_cfg.get('name'))
         self.logger.setLevel(logging.INFO)
 
-        self.max_age = TimeDelta(self.skymap_cfg.get('max_age', 60.), format='sec')
+        self.max_age = TimeDelta(self.skymap_cfg.get('max_age', 360.), format='sec')
 
         self._safety_methods = {'rain_condition':self._get_rain_safety,
                                 'sky_condition':self._get_cloud_safety,
@@ -59,7 +59,6 @@ class SkyMapWeather(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.skymap_cfg.get('name')
-        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.table_data = self.fetch_skymap_data()
         col_names = self.skymap_cfg.get('column_names')
         for name in col_names:
@@ -80,7 +79,7 @@ class SkyMapWeather(WeatherDataAbstract):
         try:
             cache_age = Time.now() - self.time
         except AttributeError:
-            cache_age = 61. * u.second
+            cache_age = 360.1 * u.second
 
         if cache_age > self.max_age:
             skymap_link = self.skymap_cfg.get('link')
@@ -95,7 +94,8 @@ class SkyMapWeather(WeatherDataAbstract):
                     doc = xmltodict.parse(fd.read())
 
             # gets the values of the data from the xml file
-            data_rows = [(int(doc['metsys']['data']['irs']['val']),
+            data_rows = [(doc['metsys']['date'] + ' ' + doc['metsys']['utc'],
+                          int(doc['metsys']['data']['irs']['val']),
                           int(doc['metsys']['data']['ers']['val']),
                           float(doc['metsys']['data']['ws']['val']),
                           float(doc['metsys']['data']['wsx']['val']),
@@ -117,18 +117,18 @@ class SkyMapWeather(WeatherDataAbstract):
             col_names = self.skymap_cfg.get('column_names')
             col_units = self.skymap_cfg.get('column_units')
 
-            skymap_table = Table(rows=data_rows, names=col_names)
+            self.skymap_table = Table(rows=data_rows, names=col_names)
 
             if len(col_names) != len(col_units):
                 self.logger.debug('Number of columns does not match number of units given')
 
             # Set units for items that have them
             for name, unit in zip(col_names, col_units):
-                skymap_table[name].unit = unit
+                self.skymap_table[name].unit = unit
 
             self.time = Time.now()
 
-        return(skymap_table)
+        return(self.skymap_table)
 
     def _get_rain_safety(self, statuses):
         """Gets the rain safety and weather conditions

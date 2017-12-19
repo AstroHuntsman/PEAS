@@ -43,7 +43,7 @@ class Met23Weather(WeatherDataAbstract):
         self.logger = logging.getLogger(name=self.met23_cfg.get('name'))
         self.logger.setLevel(logging.INFO)
 
-        self.max_age = TimeDelta(self.met23_cfg.get('max_age', 60.), format='sec')
+        self.max_age = TimeDelta(self.met23_cfg.get('max_age', 360.), format='sec')
 
         self._safety_methods = {'rain_condition':self._get_rain_safety,
                                 'wind_condition':self._get_wind_safety,
@@ -58,7 +58,6 @@ class Met23Weather(WeatherDataAbstract):
         data = {}
 
         data['weather_data_name'] = self.met23_cfg.get('name')
-        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.table_data = self.fetch_met23_data()
         col_names = self.met23_cfg.get('column_names')
         for name in col_names:
@@ -78,7 +77,7 @@ class Met23Weather(WeatherDataAbstract):
         try:
             cache_age = Time.now() - self.time
         except AttributeError:
-            cache_age = 61. * u.second
+            cache_age = 360.1 * u.second
 
         if cache_age > self.max_age:
             met23_link = self.met23_cfg.get('link')
@@ -103,7 +102,8 @@ class Met23Weather(WeatherDataAbstract):
                 rain_val = -1
 
             # gets data from the xml file.
-            data_rows = [(float(doc['metsys']['data']['ws']['val']),
+            data_rows = [(doc['metsys']['date'] + ' ' + doc['metsys']['utc'],
+                          float(doc['metsys']['data']['ws']['val']),
                           float(doc['metsys']['data']['wgust']['val']),
                           float(doc['metsys']['data']['wd']['val']),
                           float(doc['metsys']['data']['wtt']['val']),
@@ -118,18 +118,18 @@ class Met23Weather(WeatherDataAbstract):
             col_names = self.met23_cfg.get('column_names')
             col_units = self.met23_cfg.get('column_units')
 
-            met23_table = Table(rows=data_rows, names=col_names)
+            self.met23_table = Table(rows=data_rows, names=col_names)
 
             if len(col_names) != len(col_units):
                 self.logger.debug('Number of columns does not match number of units given')
 
             # Set units for items that have them
             for name, unit in zip(col_names, col_units):
-                met23_table[name].unit = unit
+                self.met23_table[name].unit = unit
 
             self.time = Time.now()
 
-        return(met23_table)
+        return(self.met23_table)
 
     def _get_rain_safety(self, statuses):
         """Gets the rain safety and weather conditions
