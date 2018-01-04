@@ -59,8 +59,10 @@ class Met23Weather(WeatherDataAbstract):
 
         data['weather_data_name'] = self.met23_cfg.get('name')
         self.table_data = self.fetch_met23_data()
+
         col_names = self.met23_cfg.get('column_names')
-        for name in col_names:
+
+        for name in col_names.keys():
             data[name] = self.table_data[name][0]
 
         self.weather_entries = data
@@ -114,15 +116,11 @@ class Met23Weather(WeatherDataAbstract):
                           )]
 
             col_names = self.met23_cfg.get('column_names')
-            col_units = self.met23_cfg.get('column_units')
 
-            self.met23_table = Table(rows=data_rows, names=col_names)
+            self.met23_table = Table(rows=data_rows, names=col_names.keys())
 
-            if len(col_names) != len(col_units):
-                self.logger.debug('Number of columns does not match number of units given')
-
-            # Set units for items that have them
-            for name, unit in zip(col_names, col_units):
+            # Set units for items
+            for name, unit in col_names.items():
                 self.met23_table[name].unit = unit
 
             self.time = Time.now()

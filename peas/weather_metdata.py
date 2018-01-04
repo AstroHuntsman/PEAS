@@ -79,8 +79,10 @@ class AATMetData(WeatherDataAbstract):
 
         data['weather_data_name'] = self.metdata_cfg.get('name')
         self.table_data = self.fetch_met_data()
+
         col_names = self.metdata_cfg.get('column_names')
-        for name in col_names:
+
+        for name in col_names.keys():
             data[name] = self.table_data[name][0]
 
         self.weather_entries = data
@@ -108,9 +110,11 @@ class AATMetData(WeatherDataAbstract):
             met = m.replace('."\n',' ')
             met = met.replace('" ', '')
 
+            col_names = self.metdata_cfg.get('column_names')
+
             # Parse the tab delimited met data into a Table
             t = Table.read(met, format='ascii.no_header', delimiter='\t',
-                                names=self.metdata_cfg.get('column_names'))
+                                names=col_names.keys())
 
             # Convert time strings to Time
             t['time_UTC'] = Time(t['time_UTC'], format='mixed_up_time')
@@ -119,14 +123,8 @@ class AATMetData(WeatherDataAbstract):
             # Convert from AAT standard time to UTC
             t['time_UTC'] = t['time_UTC'] - 10 * u.hour
 
-            col_names = self.metdata_cfg.get('column_names')
-            col_units = self.metdata_cfg.get('column_units')
-
-            if len(col_names) != len(col_units):
-                self.logger.debug('Number of columns does not match number of units given')
-
             # Set units for items that have them
-            for name, unit in zip(col_names, col_units):
+            for name, unit in col_names.items()):
                 t[name].unit = unit
 
             self._met_data = t
