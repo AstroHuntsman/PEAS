@@ -124,7 +124,7 @@ class AATMetData(WeatherDataAbstract):
             t['time_UTC'] = t['time_UTC'] - 10 * u.hour
 
             # Set units for items that have them
-            for name, unit in col_names.items()):
+            for name, unit in col_names.items():
                 t[name].unit = unit
 
             self._met_data = t
