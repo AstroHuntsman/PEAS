@@ -37,11 +37,9 @@ class AAGCloudSensor(object):
     """
     This class is for the AAG Cloud Sensor device which can be communicated with
     via serial commands.
-
     http://www.aagware.eu/aag/cloudwatcherNetwork/TechInfo/Rs232_Comms_v100.pdf
     http://www.aagware.eu/aag/cloudwatcherNetwork/TechInfo/Rs232_Comms_v110.pdf
     http://www.aagware.eu/aag/cloudwatcherNetwork/TechInfo/Rs232_Comms_v120.pdf
-
     Command List (from Rs232_Comms_v100.pdf)
     !A = Get internal name (recieves 2 blocks)
     !B = Get firmware version (recieves 2 blocks)
@@ -58,7 +56,6 @@ class AAGCloudSensor(object):
     !T = Get sensor temperature (recieves 2 blocks)
     !z = Reset RS232 buffer pointers (recieves 1 blocks)
     !K = Get serial number (recieves 2 blocks)
-
     Return Codes
     '1 '    Infra red temperature in hundredth of degree Celsius
     '2 '    Infra red sensor temperature in hundredth of degree Celsius
@@ -77,18 +74,13 @@ class AAGCloudSensor(object):
     'R '    Rain frequency counter
     'X '    Switch Opened
     'Y '    Switch Closed
-
     Advice from the manual:
-
     * When communicating with the device send one command at a time and wait for
     the respective reply, checking that the correct number of characters has
     been received.
-
     * Perform more than one single reading (say, 5) and apply a statistical
     analysis to the values to exclude any outlier.
-
     * The rain frequency measurement is the one that takes more time - 280 ms
-
     * The following reading cycle takes just less than 3 seconds to perform:
         * Perform 5 times:
             * get IR temperature
@@ -98,15 +90,14 @@ class AAGCloudSensor(object):
         * get PWM value
         * get IR errors
         * get SWITCH Status
-
     """
 
     def __init__(self, serial_address=None, use_mongo=True):
-        self.config = load_config()
         self.logger = logging.getLogger('aag-cloudsensor')
         self.logger.setLevel(logging.INFO)
 
         # Read configuration
+        self.config = load_config()
         self.cfg = self.config['weather']['aag_cloud']
 
         self.safety_delay = self.cfg.get('safety_delay', 15.)
@@ -133,7 +124,7 @@ class AAGCloudSensor(object):
                 self.logger.error('  {}'.format(e.errno))
                 self.logger.error('  {}'.format(e.strerror))
                 self.AAG = None
-            except:
+            except BaseException:
                 self.logger.error("Unable to connect to AAG Cloud Sensor")
                 self.AAG = None
         else:
@@ -333,7 +324,6 @@ class AAGCloudSensor(object):
     def get_ambient_temperature(self, n=5):
         """
         Populates the self.ambient_temp property
-
         Calculation is taken from Rs232_Comms_v100.pdf section "Converting values
         sent by the device to meaningful units" item 5.
         """
@@ -348,7 +338,8 @@ class AAGCloudSensor(object):
             except Exception:
                 pass
             else:
-                self.logger.debug('  Ambient Temperature Query = {:.1f}\t{:.1f}'.format(value, ambient_temp))
+                self.logger.debug(
+                    '  Ambient Temperature Query = {:.1f}\t{:.1f}'.format(value, ambient_temp))
                 values.append(ambient_temp)
 
         if len(values) >= n - 1:
@@ -363,10 +354,8 @@ class AAGCloudSensor(object):
     def get_sky_temperature(self, n=9):
         """
         Populates the self.sky_temp property
-
         Calculation is taken from Rs232_Comms_v100.pdf section "Converting values
         sent by the device to meaningful units" item 1.
-
         Does this n times as recommended by the "Communication operational
         recommendations" section in Rs232_Comms_v100.pdf
         """
@@ -392,7 +381,6 @@ class AAGCloudSensor(object):
         """
         Populates the self.internal_voltage, self.LDR_resistance, and
         self.rain_sensor_temp properties
-
         Calculation is taken from Rs232_Comms_v100.pdf section "Converting values
         sent by the device to meaningful units" items 4, 6, 7.
         """
@@ -413,7 +401,8 @@ class AAGCloudSensor(object):
                 internal_voltages.append(internal_voltage)
                 LDR_resistance = LDRPullupResistance / ((1023. / float(responses[1])) - 1.)
                 LDR_resistances.append(LDR_resistance)
-                r = np.log((RainPullUpResistance / ((1023. / float(responses[2])) - 1.)) / RainResAt25)
+                r = np.log((RainPullUpResistance /
+                            ((1023. / float(responses[2])) - 1.)) / RainResAt25)
                 rain_sensor_temp = 1. / ((r / RainBeta) + (1. / (ABSZERO + 25.))) - ABSZERO
                 rain_sensor_temps.append(rain_sensor_temp)
             except Exception:
@@ -467,7 +456,6 @@ class AAGCloudSensor(object):
     def get_PWM(self):
         """
         Populates the self.PWM property.
-
         Calculation is taken from Rs232_Comms_v100.pdf section "Converting values
         sent by the device to meaningful units" item 3.
         """
@@ -536,7 +524,6 @@ class AAGCloudSensor(object):
     def get_switch(self, maxtries=3):
         """
         Populates the self.switch property
-
         Unlike other queries, this method has to check if the return matches a
         !X or !Y pattern (indicating open and closed respectively) rather than
         read a value.
@@ -579,9 +566,7 @@ class AAGCloudSensor(object):
     def get_wind_speed(self, n=3):
         """
         Populates the self.wind_speed property
-
         Based on the information in Rs232_Comms_v120.pdf document
-
         Medians n measurements.  This isn't mentioned specifically by the manual
         but I'm guessing it won't hurt.
         """
@@ -649,7 +634,7 @@ class AAGCloudSensor(object):
         data['rain_condition'] = self.safe_dict['Rain']
 
         # Store current weather
-        data['date'] = dt.utcnow()
+        data['date'] = dt.utcnow().strftime('%d-%m-%Y %H:%M:%S')
         self.weather_entries.append(data)
 
         # If we get over a certain amount of entries, trim the earliest
@@ -670,7 +655,6 @@ class AAGCloudSensor(object):
         """
         Uses the algorithm described in RainSensorHeaterAlgorithm.pdf to
         determine PWM value.
-
         Values are for the default read cycle of 10 seconds.
         """
         deltaT = last_entry['rain_sensor_temp_C'] - target
@@ -724,9 +708,11 @@ class AAGCloudSensor(object):
         rain_history = [x['rain_safe'] for x in entries if 'rain_safe' in x.keys()]
 
         if 'ambient_temp_C' not in last_entry.keys():
-            self.logger.warning('  Do not have Ambient Temperature measurement.  Can not determine PWM value.')
+            self.logger.warning(
+                '  Do not have Ambient Temperature measurement.  Can not determine PWM value.')
         elif 'rain_sensor_temp_C' not in last_entry.keys():
-            self.logger.warning('  Do not have Rain Sensor Temperature measurement.  Can not determine PWM value.')
+            self.logger.warning(
+                '  Do not have Rain Sensor Temperature measurement.  Can not determine PWM value.')
         else:
             # Decide whether to use the impulse heating mechanism
             if len(rain_history) > 3 and not np.any(rain_history):
@@ -734,14 +720,13 @@ class AAGCloudSensor(object):
                 if self.impulse_heating:
                     impulse_time = (now - self.impulse_start).total_seconds()
                     if impulse_time > float(self.heater_cfg['impulse_duration']):
-                        self.logger.debug('  Impulse heating has been on for > {:.0f} seconds.  Turning off.'.format(
-                            float(self.heater_cfg['impulse_duration'])
-                        ))
+                        self.logger.debug('Impulse heating on for > {:.0f} s. Turning off.', float(
+                            self.heater_cfg['impulse_duration']))
                         self.impulse_heating = False
                         self.impulse_start = None
                     else:
-                        self.logger.debug('  Impulse heating has been on for {:.0f} seconds.'.format(
-                            impulse_time))
+                        self.logger.debug(
+                            '  Impulse heating has been on for {:.0f} seconds.', impulse_time)
                 else:
                     self.logger.debug('  Starting impulse heating sequence.')
                     self.impulse_start = now
@@ -753,13 +738,15 @@ class AAGCloudSensor(object):
 
             # Set PWM Based on Impulse Method or Normal Method
             if self.impulse_heating:
-                target_temp = float(last_entry['ambient_temp_C']) + float(self.heater_cfg['impulse_temp'])
+                target_temp = float(last_entry['ambient_temp_C']) + \
+                    float(self.heater_cfg['impulse_temp'])
                 if last_entry['rain_sensor_temp_C'] < target_temp:
                     self.logger.debug('  Rain sensor temp < target.  Setting heater to 100 %.')
                     self.set_PWM(100)
                 else:
                     new_PWM = self.AAG_heater_algorithm(target_temp, last_entry)
-                    self.logger.debug('  Rain sensor temp > target.  Setting heater to {:d} %.'.format(new_PWM))
+                    self.logger.debug(
+                        '  Rain sensor temp > target.  Setting heater to {:d} %.'.format(new_PWM))
                     self.set_PWM(new_PWM)
             else:
                 if last_entry['ambient_temp_C'] < self.heater_cfg['low_temp']:
@@ -774,7 +761,8 @@ class AAGCloudSensor(object):
                 target_temp = last_entry['ambient_temp_C'] + deltaT
                 new_PWM = int(self.heater_PID.recalculate(float(last_entry['rain_sensor_temp_C']),
                                                           new_set_point=target_temp))
-                self.logger.debug('  last PID interval = {:.1f} s'.format(self.heater_PID.last_interval))
+                self.logger.debug('  last PID interval = {:.1f} s'.format(
+                    self.heater_PID.last_interval))
                 self.logger.debug('  target={:4.1f}, actual={:4.1f}, new PWM={:3.0f}, P={:+3.0f}, I={:+3.0f} ({:2d}), D={:+3.0f}'.format(
                     target_temp, float(last_entry['rain_sensor_temp_C']),
                     new_PWM, self.heater_PID.Kp * self.heater_PID.Pval,
@@ -845,7 +833,8 @@ class AAGCloudSensor(object):
                 cloud_condition = 'Cloudy'
             else:
                 cloud_condition = 'Clear'
-            self.logger.debug('Cloud Condition: {} (Sky-Amb={:.1f} C)'.format(cloud_condition, sky_diff[-1]))
+            self.logger.debug(
+                'Cloud Condition: {} (Sky-Amb={:.1f} C)'.format(cloud_condition, sky_diff[-1]))
 
         return cloud_condition, sky_safe
 
@@ -879,7 +868,8 @@ class AAGCloudSensor(object):
 
             typical_data_interval = (end_time - start_time).total_seconds() / len(entries)
 
-            mavg_count = int(np.ceil(120. / typical_data_interval))  # What is this 120?
+            moving_avg_seconds = 120.
+            mavg_count = int(np.ceil(moving_avg_seconds / typical_data_interval))
             wind_mavg = movingaverage(wind_speed, mavg_count)
 
             # Windy?
@@ -896,7 +886,8 @@ class AAGCloudSensor(object):
                 wind_condition = 'Windy'
             else:
                 wind_condition = 'Calm'
-            self.logger.debug('  Wind Condition: {} ({:.1f} km/h)'.format(wind_condition, wind_mavg[-1]))
+            self.logger.debug(
+                '  Wind Condition: {} ({:.1f} km/h)'.format(wind_condition, wind_mavg[-1]))
 
             # Gusty?
             if max(wind_speed) > threshold_very_gusty:
@@ -914,7 +905,8 @@ class AAGCloudSensor(object):
             else:
                 gust_condition = 'Calm'
 
-            self.logger.debug('  Gust Condition: {} ({:.1f} km/h)'.format(gust_condition, wind_speed[-1]))
+            self.logger.debug(
+                '  Gust Condition: {} ({:.1f} km/h)'.format(gust_condition, wind_speed[-1]))
 
         return (wind_condition, wind_safe), (gust_condition, gust_safe)
 
